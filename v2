@@ -82,22 +82,21 @@ const AppManagementview: React.FC<AppManagementProps> = ({ onNavigate }) => {
   React.useEffect(() => {
     if (activeAppTab !== "2") return;
     const fetchFeatures = async () => {
-      try {
-        const resp = await axios.get(
-          'http://uklvauems02a.uk.standardchartered.com:8083/fmces/v1/features'
-        );
-        const feats = resp.data.map((f: any) => ({
-          name: f.featureName,
-          featureId: String(f.featureId),
-          status: f.application.isActive ? 'Enabled' : 'Disabled',
-          usersAssigned: '-',
-          lastModified: new Date(f.lastUpdated).toLocaleDateString(),
-          applicationUID: String(f.application.appUID),
-        }));
-        setFeaturesData(feats);
-      } catch (err) {
-        console.error('Error fetching features', err);
-      }
+        try {
+          const resp = await axios.get(
+            'http://uklvauems02a.uk.standardchartered.com:8083/fmces/v1/features'
+          );
+          const feats = resp.data.map((f: any) => ({
+            name: f.featureName,
+            featureId: String(f.featureId),
+            desc: f.description || '-',
+            lastModified: new Date(f.lastUpdated).toLocaleDateString(),
+            applicationUID: String(f.application.appUID),
+          }));
+          setFeaturesData(feats);
+        } catch (err) {
+          console.error('Error fetching features', err);
+        }
     };
     fetchFeatures();
   }, [activeAppTab]);
@@ -260,21 +259,7 @@ const AppManagementview: React.FC<AppManagementProps> = ({ onNavigate }) => {
                   tableCols={[
                     { accessorKey: 'name', header: 'Feature Name' },
                     { accessorKey: 'featureId', header: 'Feature ID' },
-                    {
-                      accessorKey: 'status', 
-                      header: 'Status',
-                      Cell: ({ cell }: any) => (
-                        <Box component="span" sx={{ 
-                          backgroundColor: cell.getValue() === 'Enabled' ? '#2BCBC11A' : '#ff00001A', 
-                          borderRadius: '20px', 
-                          color: cell.getValue() === 'Enabled' ? '#2BCBC1' : '#ff0000', 
-                          p: '0.25rem 0.5rem' 
-                        }}>
-                          {cell.getValue()}
-                        </Box>
-                      )
-                    },
-                    { accessorKey: 'usersAssigned', header: 'Users Assigned' },
+                    { accessorKey: 'desc', header: 'Description' },
                     { accessorKey: 'lastModified', header: 'Last Modified' },
                   ]}
                 />
