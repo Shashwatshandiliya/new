@@ -14,3 +14,41 @@ test('displays error state when API fails', async () => {
   
   consoleError.mockRestore();
 });
+
+
+test('displays applications data correctly', async () => {
+  render(<AppManagementview {...mockProps} />);
+  
+  // Wait for table rendering
+  const row = await screen.findByRole('row', {
+    name: /Test App/i
+  });
+
+  // Verify row content
+  expect(within(row).getByText('Test App')).toBeInTheDocument();
+  expect(within(row).getByText('Enabled')).toBeInTheDocument();
+  expect(within(row).getByText('2 Features')).toBeInTheDocument();
+  expect(within(row).getByText('3 User Actions')).toBeInTheDocument();
+});
+
+
+
+test('shows features grouped by application', async () => {
+  render(<AppManagementview {...mockProps} />);
+  
+  // Switch to Features tab
+  fireEvent.click(await screen.findByText('Features'));
+  
+  // Wait for features data to load
+  await waitFor(() => {
+    expect(screen.getByText('1 - Test App')).toBeInTheDocument(); // Use app ID from mock data
+  });
+
+  // Verify feature details
+  const featureRow = await screen.findByRole('row', {
+    name: /Test Feature/i
+  });
+  
+  expect(within(featureRow).getByText('Test Feature')).toBeInTheDocument();
+  expect(within(featureRow).getByText('Feature Desc')).toBeInTheDocument();
+});
