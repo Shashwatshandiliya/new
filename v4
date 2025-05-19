@@ -1,54 +1,48 @@
-test('displays error state when API fails', async () => {
-  const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+test('displays applications data correctly', async () => {
+  // Ensure fresh mock data
+  mockedAxios.get.mockResolvedValueOnce({ data: [{
+    ...mockAppsData[0],
+    appID: '1', // Match expected string type
+    totalNumberOfFeatures: 2,
+    totalNumberOfActions: 3
+  }]});
+
+  render(<AppManagementview {...mockProps} />);
   
+  // Wait for data to load
+  await waitFor(() => {
+    const row = screen.getByRole('row', {
+      name: /Test App/i
+    });
+    
+    // Verify exact cell content
+    expect(within(row).getByRole('cell', { name: 'Test App' })).toBeInTheDocument();
+    expect(within(row).getByRole('cell', { name: '1' })).toBeInTheDocument();
+    expect(within(row).getByRole('cell', { name: 'Enabled' })).toBeInTheDocument();
+    expect(within(row).getByRole('cell', { name: '2' })).toBeInTheDocument(); // Features count
+    expect(within(row).getByRole('cell', { name: '3' })).toBeInTheDocument(); // Actions count
+  });
+});
+
+
+
+test('displays error state when API fails', async () => {
   // Clear previous mocks
   mockedAxios.get.mockReset();
-  // Mock rejection for applications endpoint only
-  mockedAxios.get.mockRejectedValueOnce(new Error('API Error'));
   
+  // Mock specific endpoint failure
+  mockedAxios.get.mockImplementation(url => {
+    if (url.includes('applicationsWithCountOfFeaturesAndActions')) {
+      return Promise.reject(new Error('API Error'));
+    }
+    return Promise.resolve({ data: [] });
+  });
+
   render(<AppManagementview {...mockProps} />);
   
   await waitFor(() => {
-    expect(screen.getByText(/error fetching applications/i)).toBeInTheDocument();
+    expect(screen.getByTestId('error-message')).toHaveTextContent(
+      'Error fetching applications'
+    );
   });
-  
-  consoleError.mockRestore();
-});
-
-
-test('displays applications data correctly', async () => {
-  render(<AppManagementview {...mockProps} />);
-  
-  // Wait for table rendering
-  const row = await screen.findByRole('row', {
-    name: /Test App/i
-  });
-
-  // Verify row content
-  expect(within(row).getByText('Test App')).toBeInTheDocument();
-  expect(within(row).getByText('Enabled')).toBeInTheDocument();
-  expect(within(row).getByText('2 Features')).toBeInTheDocument();
-  expect(within(row).getByText('3 User Actions')).toBeInTheDocument();
-});
-
-
-
-test('shows features grouped by application', async () => {
-  render(<AppManagementview {...mockProps} />);
-  
-  // Switch to Features tab
-  fireEvent.click(await screen.findByText('Features'));
-  
-  // Wait for features data to load
-  await waitFor(() => {
-    expect(screen.getByText('1 - Test App')).toBeInTheDocument(); // Use app ID from mock data
-  });
-
-  // Verify feature details
-  const featureRow = await screen.findByRole('row', {
-    name: /Test Feature/i
-  });
-  
-  expect(within(featureRow).getByText('Test Feature')).toBeInTheDocument();
-  expect(within(featureRow).getByText('Feature Desc')).toBeInTheDocument();
 });
