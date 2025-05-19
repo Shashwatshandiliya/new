@@ -1,365 +1,163 @@
-import * as React from "react";
-import Grid from "@mui/material/Grid";
-import IconButton from "@mui/material/IconButton";
-import Button from "@mui/material/Button";
-import Box from "@mui/material/Box";
-import MaterialTable from "../../../Root/components/MaterialTable";
-import { InputAdornment, Select, TextField, Typography } from "@mui/material";
-import AddCircleIcon from "@mui/icons-material/AddCircle";
-import FolderIcon from '@mui/icons-material/Folder';
-import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
-import { Tabs } from "antd";
-import Drawer from "@mui/material/Drawer";
-import styles from "./AppManagement.module.css";
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
-import axios from "axios";
+import React from 'react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import AppManagementview from './AppManagementview';
+import axios from 'axios';
+import '@testing-library/jest-dom';
 
-const { TabPane } = Tabs;
+jest.mock('axios');
+const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-interface AppManagementProps {
-  onNavigate?: (tab: string) => void;
-  onEditApp: (id: string) => void;
-  onDeleteApp: (id: string) => void;
-  onEditFeature: (id: string) => void;
-  onDeleteFeature: (id: string) => void;
-  onEditAction: (id: string) => void;
-  onDeleteAction: (id: string) => void;
-}
+const mockAppsData = [
+  {
+    appName: 'Test App',
+    appID: 1,
+    appUID: '123',
+    appDesc: 'Test Description',
+    totalNumberOfFeatures: 2,
+    totalNumberOfActions: 3,
+    isActive: true,
+    lastUpdated: '2023-01-01',
+    features: [],
+    actions: []
+  }
+];
 
-interface AppManagementRow {
-  "app name": string;
-  "app id": string;
-  "appUID": string;
-  status: string;
-  "appDesc": string;
-  "number of features": string;
-  "number of actions": string;
-  "last modified": string;
-  features: { name: string; featureId: string; status: string; usersAssigned: string; lastModified: string }[];
-  actions: { name: string; actionId: string; status: string; usersAssigned: string; lastModified: string }[];
-}
+const mockFeaturesData = [
+  {
+    featureName: 'Test Feature',
+    featureId: 1,
+    description: 'Feature Desc',
+    lastUpdated: '2023-01-01',
+    application: { appUID: '123' }
+  }
+];
 
-interface FeatureRow {
-  name: string;
-  featureId: string;
-  desc: string;
-  lastModified: string;
-  applicationUID: string;
-}
+const mockActionsData = [
+  {
+    actionName: 'Test Action',
+    actionId: 1,
+    actionDescription: 'Action Desc',
+    lastUpdated: '2023-01-01',
+    application: { appUID: '123' }
+  }
+];
 
-interface ActionRow {
-  name: string;
-  actionId: string;
-  desc: string;
-  lastModified: string;
-  applicationUID: string;
-}
-
-const AppManagementview: React.FC<AppManagementProps> = ({ 
-  onNavigate, 
-  onEditApp, 
-  onDeleteApp,
-  onEditFeature,
-  onDeleteFeature,
-  onEditAction,
-  onDeleteAction
-}) => {
-  const [activeAppTab, setActiveAppTab] = React.useState("1");
-  const [tabRow, setTabRow] = React.useState<AppManagementRow[]>([]);
-  const [rowCount, setRowCount] = React.useState(0);
-  const [selectedDate, setSelectedDate] = React.useState("");
-  const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
-  const [drawerData, setDrawerData] = React.useState<AppManagementRow | FeatureRow | ActionRow | null>(null);
-  const [drawerType, setDrawerType] = React.useState<'app' | 'feature' | 'action'>('app');
-  const [featuresData, setFeaturesData] = React.useState<FeatureRow[]>([]);
-  const [actionsData, setActionsData] = React.useState<ActionRow[]>([]);
-
-  React.useEffect(() => {
-    const fetchApplications = async () => {
-      try {
-        const response = await axios.get(
-          'http://uklvauems02a.uk.standardchartered.com:8083/fmces/v1/applicationsWithCountOfFeaturesAndActions'
-        );
-        const apps = response.data.map((item: any) => ({
-          "app name": item.appName,
-          "app id": String(item.appID),
-          "appUID": String(item.appUID),
-          "appDesc": item.appDesc,
-          "number of features": String(item.totalNumberOfFeatures),
-          "number of actions": String(item.totalNumberOfActions),
-          status: item.isActive ? "Enabled" : "Disabled",
-          "last modified": new Date(item.lastUpdated).toLocaleDateString(),
-          features: item.features,
-          actions: item.actions,
-        }));
-        setTabRow(apps);
-        setRowCount(apps.length);
-      } catch (error) {
-        console.error('Error fetching applications', error);
-      }
-    };
-    fetchApplications();
-  }, []);
-
-  React.useEffect(() => {
-    if (activeAppTab !== "2") return;
-    const fetchFeatures = async () => {
-      try {
-        const resp = await axios.get(
-          'http://uklvauems02a.uk.standardchartered.com:8083/fmces/v1/features'
-        );
-        const feats = resp.data.map((f: any) => ({
-          name: f.featureName,
-          featureId: String(f.featureId),
-          desc: f.description || '-',
-          lastModified: new Date(f.lastUpdated).toLocaleDateString(),
-          applicationUID: String(f.application.appUID),
-        }));
-        setFeaturesData(feats);
-      } catch (err) {
-        console.error('Error fetching features', err);
-      }
-    };
-    fetchFeatures();
-  }, [activeAppTab]);
-
-  React.useEffect(() => {
-    if (activeAppTab !== "3") return;
-    const fetchActions = async () => {
-      try {
-        const resp = await axios.get(
-          'http://uklvauems02a.uk.standardchartered.com:8083/fmces/v1/actions'
-        );
-        const acts = resp.data.map((a: any) => ({
-          name: a.actionName,
-          actionId: String(a.actionId),
-          desc: a.actionDescription || '-',
-          lastModified: new Date(a.lastUpdated).toLocaleDateString(),
-          applicationUID: String(a.application.appUID),
-        }));
-        setActionsData(acts);
-      } catch (err) {
-        console.error('Error fetching actions', err);
-      }
-    };
-    fetchActions();
-  }, [activeAppTab]);
-  
-  const handleRowClick = (rowData: AppManagementRow | FeatureRow | ActionRow, type: 'app' | 'feature' | 'action') => {
-    setDrawerData(rowData);
-    setDrawerType(type);
-    setIsDrawerOpen(true);
+describe('AppManagementview', () => {
+  const mockProps = {
+    onNavigate: jest.fn(),
+    onEditApp: jest.fn(),
+    onDeleteApp: jest.fn(),
+    onEditFeature: jest.fn(),
+    onDeleteFeature: jest.fn(),
+    onEditAction: jest.fn(),
+    onDeleteAction: jest.fn()
   };
 
-  const headCells = [
-    { accessorKey: 'app name', header: 'App Name' },
-    { accessorKey: 'app id', header: 'App ID' },
-    {
-      accessorKey: 'status', 
-      header: 'Status',
-      Cell: ({ cell }: any) => (
-        <Box component="span" sx={{ 
-          backgroundColor: cell.getValue() === 'Enabled' ? '#2BCBC11A' : '#ff00001A', 
-          borderRadius: '20px', 
-          color: cell.getValue() === 'Enabled' ? '#2BCBC1' : '#ff0000', 
-          p: '0.25rem 0.5rem' 
-        }}>
-          {cell.getValue()}
-        </Box>
-      )
-    },
-    { accessorKey: 'number of features', header: 'Total Features' },
-    { accessorKey: 'number of actions', header: 'Total User Actions' },
-    { accessorKey: 'last modified', header: 'Last Modified' },
-  ];
+  beforeEach(() => {
+    mockedAxios.get.mockImplementation((url) => {
+      if (url.includes('applicationsWithCountOfFeaturesAndActions')) {
+        return Promise.resolve({ data: mockAppsData });
+      }
+      if (url.includes('features')) {
+        return Promise.resolve({ data: mockFeaturesData });
+      }
+      if (url.includes('actions')) {
+        return Promise.resolve({ data: mockActionsData });
+      }
+      return Promise.reject(new Error('not found'));
+    });
+  });
 
-  const onChangeTab = (key: string) => setActiveAppTab(key);
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
 
-  const renderAppManagement = () => (
-    <>
-      <div className={styles.filterSection}>
-        <Grid container alignItems="center" spacing={2}>
-          {/* Filter section remains unchanged */}
-        </Grid>
-      </div>
+  test('renders initial Applications tab correctly', async () => {
+    render(<AppManagementview {...mockProps} />);
+    
+    expect(await screen.findByText('Application Management')).toBeInTheDocument();
+    expect(screen.getByText('Applications')).toHaveStyle('color: #007BFF');
+    expect(screen.getByRole('button', { name: 'Add New' })).toBeInTheDocument();
+  });
 
-      <div className={styles.tableSection}>
-        <Box sx={{ border: '1px solid #444', p: 2, borderRadius: 1, mt: 2, backgroundColor: '#1A2028' }}>
-          <MaterialTable 
-            tableRows={tabRow} 
-            tableCols={headCells} 
-            totalRowCount={rowCount} 
-            globalSearch={false} 
-            onRowClick={(row) => handleRowClick(row, 'app')} 
-          />
-          
-          <Drawer 
-            anchor="right" 
-            open={isDrawerOpen} 
-            onClose={() => setIsDrawerOpen(false)}
-            sx={{ '& .MuiDrawer-paper': { width: 500, backgroundColor: '#1A2028', p: 2 } }}
-          >
-            {drawerData ? (
-              <>
-                <div style={{ width: "466px", padding: "18px", borderRadius: "10px", backgroundColor: "#262B36" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Typography variant="h6">
-                      {drawerType === 'app' ? (drawerData as AppManagementRow)["app name"] : 
-                       drawerType === 'feature' ? (drawerData as FeatureRow).name : 
-                       (drawerData as ActionRow).name}
-                    </Typography>
-                  </div>
-                  <Grid container spacing={1} sx={{ mt: 2 }}>
-                    {drawerType === 'app' ? (
-                      <>
-                        <Grid item xs={3} sx={{ backgroundColor: '#FFFFFF0D', p: 1 }}>
-                          {`ID: ${(drawerData as AppManagementRow)["app id"]}`}
-                        </Grid>
-                        <Grid item xs={3} sx={{ backgroundColor: '#FFFFFF0D', p: 1 }}>
-                          {`${(drawerData as AppManagementRow)["number of features"]} Features`}
-                        </Grid>
-                        <Grid item xs={3} sx={{ backgroundColor: '#FFFFFF0D', p: 1 }}>
-                          {`${(drawerData as AppManagementRow)["number of actions"]} Actions`}
-                        </Grid>
-                        <Grid item xs={3} sx={{ backgroundColor: '#FFFFFF0D', p: 1 }}>
-                          {(drawerData as AppManagementRow).status}
-                        </Grid>
-                      </>
-                    ) : (
-                      <Grid item xs={12} sx={{ backgroundColor: '#FFFFFF0D', p: 1 }}>
-                        {`ID: ${drawerType === 'feature' ? 
-                          (drawerData as FeatureRow).featureId : 
-                          (drawerData as ActionRow).actionId}`}
-                      </Grid>
-                    )}
-                  </Grid>
-                </div>
+  test('switches between tabs correctly', async () => {
+    render(<AppManagementview {...mockProps} />);
+    
+    fireEvent.click(screen.getByText('Features'));
+    await waitFor(() => {
+      expect(screen.getByText('Features')).toHaveStyle('color: #007BFF');
+      expect(axios.get).toHaveBeenCalledWith(expect.stringContaining('features'));
+    });
 
-                <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                  <Button
-                    variant="outlined"
-                    startIcon={<DeleteIcon />}
-                    onClick={() => {
-                      if (drawerType === 'app') {
-                        onDeleteApp((drawerData as AppManagementRow)["app id"]);
-                      } else if (drawerType === 'feature') {
-                        onDeleteFeature((drawerData as FeatureRow).featureId);
-                      } else {
-                        onDeleteAction((drawerData as ActionRow).actionId);
-                      }
-                    }}
-                    sx={{ color: 'white', borderColor: 'white' }}
-                  >
-                    Delete
-                  </Button>
-                  <Button
-                    variant="contained"
-                    startIcon={<EditIcon />}
-                    onClick={() => {
-                      if (drawerType === 'app') {
-                        onEditApp((drawerData as AppManagementRow)["app id"]);
-                      } else if (drawerType === 'feature') {
-                        onEditFeature((drawerData as FeatureRow).featureId);
-                      } else {
-                        onEditAction((drawerData as ActionRow).actionId);
-                      }
-                    }}
-                  >
-                    Edit
-                  </Button>
-                </Box>
+    fireEvent.click(screen.getByText('Actions'));
+    await waitFor(() => {
+      expect(screen.getByText('Actions')).toHaveStyle('color: #007BFF');
+      expect(axios.get).toHaveBeenCalledWith(expect.stringContaining('actions'));
+    });
+  });
 
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="body1">Description</Typography>
-                  <Box sx={{ backgroundColor: '#FFFFFF0D', p: 2, borderRadius: 1, color: 'white' }}>
-                    {drawerType === 'app' ? 
-                      (drawerData as AppManagementRow).appDesc : 
-                      drawerType === 'feature' ? 
-                      (drawerData as FeatureRow).desc : 
-                      (drawerData as ActionRow).desc}
-                  </Box>
-                </Box>
-              </>
-            ) : (
-              <Typography>No Record</Typography>
-            )}
-          </Drawer>
-        </Box>
-      </div>
-    </>
-  );
+  test('displays applications data correctly', async () => {
+    render(<AppManagementview {...mockProps} />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('Test App')).toBeInTheDocument();
+      expect(screen.getByText('Enabled')).toBeInTheDocument();
+      expect(screen.getByText('2 Features')).toBeInTheDocument();
+    });
+  });
 
-  const renderAppFeature = () => (
-    <div>
-      {tabRow
-        .filter(app => parseInt(app["number of features"]) > 0)
-        .map(app => {
-          const rows = featuresData.filter(f => f.applicationUID === app.appUID);
-          return (
-            <Box 
-              key={app.appUID} 
-              sx={{ border: '1px solid #444', p: 2, borderRadius: 1, backgroundColor: '#1A2028', mt: 2 }}
-            >
-              <Typography variant="h6" sx={{ color: 'white' }}>
-                {`${app['app id']} - ${app['app name']}`}
-              </Typography>
-              <Box sx={{ mt: 1 }}>
-                <MaterialTable
-                  tableRows={rows}
-                  globalSearch={false}
-                  tableCols={[
-                    { accessorKey: 'name', header: 'Feature Name' },
-                    { accessorKey: 'featureId', header: 'Feature ID' },
-                    { accessorKey: 'desc', header: 'Description' },
-                    { accessorKey: 'lastModified', header: 'Last Modified' },
-                  ]}
-                  onRowClick={(row) => handleRowClick(row, 'feature')}
-                />
-              </Box>
-            </Box>
-          );
-        })}
-    </div>
-  );
+  test('opens drawer with app details on row click', async () => {
+    render(<AppManagementview {...mockProps} />);
+    
+    const row = await screen.findByText('Test App');
+    fireEvent.click(row);
 
-  const renderAppAction = () => (
-    <div>
-      {tabRow
-        .filter(app => parseInt(app["number of actions"]) > 0)
-        .map(app => {
-          const rows = actionsData.filter(a => a.applicationUID === app.appUID);
-          return (
-            <Box 
-              key={app.appUID} 
-              sx={{ border: '1px solid #444', p: 2, borderRadius: 1, backgroundColor: '#1A2028', mt: 2 }}
-            >
-              <Typography variant="h6" sx={{ color: 'white' }}>
-                {`${app['app id']} - ${app['app name']}`}
-              </Typography>
-              <Box sx={{ mt: 1 }}>
-                <MaterialTable
-                  tableRows={rows}
-                  globalSearch={false}
-                  tableCols={[
-                    { accessorKey: 'name', header: 'Action Name' },
-                    { accessorKey: 'actionId', header: 'Action ID' },
-                    { accessorKey: 'desc', header: 'Description' },
-                    { accessorKey: 'lastModified', header: 'Last Modified' },
-                  ]}
-                  onRowClick={(row) => handleRowClick(row, 'action')}
-                />
-              </Box>
-            </Box>
-          );
-        })}
-    </div>
-  );
+    await waitFor(() => {
+      expect(screen.getByText('Test Description')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
+    });
+  });
 
-  // Rest of the component remains unchanged...
-  // [Keep the existing menu and other UI elements as they were]
+  test('triggers delete app callback correctly', async () => {
+    render(<AppManagementview {...mockProps} />);
+    
+    const row = await screen.findByText('Test App');
+    fireEvent.click(row);
+    fireEvent.click(await screen.findByRole('button', { name: 'Delete' }));
+
+    await waitFor(() => {
+      expect(mockProps.onDeleteApp).toHaveBeenCalledWith('1');
+    });
+  });
+
+  test('shows features grouped by application', async () => {
+    render(<AppManagementview {...mockProps} />);
+    
+    fireEvent.click(screen.getByText('Features'));
+    await waitFor(() => {
+      expect(screen.getByText('123 - Test App')).toBeInTheDocument();
+      expect(screen.getByText('Test Feature')).toBeInTheDocument();
+    });
+  });
+
+  test('handles add new menu interactions', async () => {
+    render(<AppManagementview {...mockProps} />);
+    
+    fireEvent.click(screen.getByRole('button', { name: 'Add New' }));
+    fireEvent.click(screen.getByText('Feature'));
+
+    await waitFor(() => {
+      expect(mockProps.onNavigate).toHaveBeenCalledWith('add-feature');
+    });
+  });
+
+  test('displays error state when API fails', async () => {
+    mockedAxios.get.mockRejectedValue(new Error('API Error'));
+    render(<AppManagementview {...mockProps} />);
+    
+    await waitFor(() => {
+      expect(screen.getByText(/error fetching applications/i)).toBeInTheDocument();
+    });
+  });
 });
-
-export default AppManagementview;
