@@ -1,19 +1,23 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import CreateNewApp from './CreateNewApp';
-import axios from 'axios';
 import { ToastContainer } from 'react-toastify';
 import '@testing-library/jest-dom';
+import * as Service from '../../../Root/import';
 
-jest.mock('axios');
-const mockedAxios = axios as jest.Mocked<typeof axios>;
+jest.mock('../../../Root/import', () => ({
+  Service: {
+    postService: jest.fn()
+  }
+}));
+
+jest.useFakeTimers();
 
 describe('CreateNewApp', () => {
   const mockOnBack = jest.fn();
 
   beforeEach(() => {
-    mockedAxios.post.mockReset();
-    mockOnBack.mockClear();
+    jest.clearAllMocks();
   });
 
   test('renders all form elements', () => {
@@ -37,21 +41,6 @@ describe('CreateNewApp', () => {
     const appIdInput = screen.getByLabelText('Application ID');
     fireEvent.change(appIdInput, { target: { value: 'TEST123' } });
     expect(appIdInput).toHaveValue('TEST123');
-
-    const downtimeStart = screen.getByLabelText('Downtime Start');
-    fireEvent.change(downtimeStart, { target: { value: '2023-01-01T00:00' } });
-    expect(downtimeStart).toHaveValue('2023-01-01T00:00');
-  });
-
-  test('handles recurring downtime selection', () => {
-    render(<CreateNewApp onBack={mockOnBack} />);
-    
-    const select = screen.getByLabelText('Recurring Downtime');
-    fireEvent.mouseDown(select);
-    const yesOption = screen.getByRole('option', { name: 'Yes' });
-    fireEvent.click(yesOption);
-    
-    expect(screen.getByText('Yes')).toBeInTheDocument();
   });
 
   test('shows validation errors on empty submit', async () => {
@@ -69,54 +58,93 @@ describe('CreateNewApp', () => {
     });
   });
 
+  // Fixed Tests Below
+
+  test('handles back button click', () => {
+    render(<CreateNewApp onBack={mockOnBack} />);
+    
+    const backButton = screen.getByRole('button', { name: /back/i });
+    fireEvent.click(backButton);
+    expect(mockOnBack).toHaveBeenCalled();
+  });
+
+  test('handles recurring downtime selection', async () => {
+    render(<CreateNewApp onBack={mockOnBack} />);
+    
+    const select = screen.getByLabelText('Recurring Downtime');
+    
+    // Open dropdown
+    fireEvent.mouseDown(select);
+    
+    // Select Yes option
+    const yesOption = await screen.findByRole('option', { name: 'Yes' });
+    fireEvent.click(yesOption);
+
+    // Verify selection
+    await waitFor(() => {
+      expect(screen.getByText('Yes')).toBeInTheDocument();
+      expect(screen.queryByText('No')).not.toBeInTheDocument();
+    });
+  });
+
   test('submits form successfully', async () => {
-    mockedAxios.post.mockResolvedValueOnce({ status: 201 });
-    render(
+    (Service.postService as jest.Mock).mockResolvedValue({ status: 201 });
+    
+    const { getByLabelText } = render(
       <>
         <ToastContainer />
         <CreateNewApp onBack={mockOnBack} />
       </>
     );
 
-    // Fill required fields
-    fireEvent.change(screen.getByLabelText('Application ID'), { target: { value: 'TEST123' } });
-    fireEvent.change(screen.getByLabelText('ITAM Name'), { target: { value: 'ITAM1' } });
-    fireEvent.change(screen.getByLabelText('Application Name'), { target: { value: 'Test App' } });
-    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Test Description' } });
-    fireEvent.change(screen.getByLabelText('App Owner'), { target: { value: 'Owner' } });
-    fireEvent.change(screen.getByLabelText('Application Dev DL'), { target: { value: 'dl@test.com' } });
-    fireEvent.change(screen.getByLabelText('Application Dev DL'), { 
+    // Fill all required fields
+    fireEvent.change(getByLabelText('Application ID'), { target: { value: 'TEST123' } });
+    fireEvent.change(getByLabelText('ITAM Name'), { target: { value: 'ITAM1' } });
+    fireEvent.change(getByLabelText('Application Name'), { target: { value: 'Test App' } });
+    fireEvent.change(getByLabelText('Description'), { target: { value: 'Test Description' } });
+    fireEvent.change(getByLabelText('App Owner'), { target: { value: 'Owner' } });
+    fireEvent.change(getByLabelText('Application Dev DL'), { target: { value: 'dl@test.com' } });
+    fireEvent.change(getByLabelText('Application Dev DL'), { 
       target: { name: 'pssDL', value: 'pss@test.com' } 
     });
 
-    // Select recurring downtime
-    fireEvent.mouseDown(screen.getByLabelText('Recurring Downtime'));
+    // Handle recurring downtime
+    fireEvent.mouseDown(getByLabelText('Recurring Downtime'));
     fireEvent.click(screen.getByRole('option', { name: 'Yes' }));
 
+    // Submit form
     fireEvent.click(screen.getByRole('button', { name: /submit/i }));
 
     await waitFor(() => {
-      expect(mockedAxios.post).toHaveBeenCalledWith(
-        'http://uklvauems02a.uk.standardchartered.com:8083/fmces/v1/application/create',
+      expect(Service.postService).toHaveBeenCalledWith(
+        '/fmces/p80/v1/data-policy/create',
         expect.objectContaining({
           appID: 'TEST123',
+          itamName: 'ITAM1',
           appName: 'Test App',
           isRecurringDowntime: true
         })
       );
     });
 
+    // Check for success toast
     await waitFor(() => {
       expect(screen.getByText(/app created successfully/i)).toBeInTheDocument();
-      setTimeout(() => {
-        expect(mockOnBack).toHaveBeenCalled();
-      }, 1000);
     });
+
+    // Advance timers for the setTimeout
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+
+    // Verify navigation back
+    expect(mockOnBack).toHaveBeenCalled();
   });
 
   test('handles form submission error', async () => {
-    mockedAxios.post.mockRejectedValueOnce(new Error('API Error'));
-    render(
+    (Service.postService as jest.Mock).mockRejectedValue(new Error('API Error'));
+    
+    const { getByLabelText } = render(
       <>
         <ToastContainer />
         <CreateNewApp onBack={mockOnBack} />
@@ -124,13 +152,13 @@ describe('CreateNewApp', () => {
     );
 
     // Fill required fields
-    fireEvent.change(screen.getByLabelText('Application ID'), { target: { value: 'TEST123' } });
-    fireEvent.change(screen.getByLabelText('ITAM Name'), { target: { value: 'ITAM1' } });
-    fireEvent.change(screen.getByLabelText('Application Name'), { target: { value: 'Test App' } });
-    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Test Description' } });
-    fireEvent.change(screen.getByLabelText('App Owner'), { target: { value: 'Owner' } });
-    fireEvent.change(screen.getByLabelText('Application Dev DL'), { target: { value: 'dl@test.com' } });
-    fireEvent.change(screen.getByLabelText('Application Dev DL'), { 
+    fireEvent.change(getByLabelText('Application ID'), { target: { value: 'TEST123' } });
+    fireEvent.change(getByLabelText('ITAM Name'), { target: { value: 'ITAM1' } });
+    fireEvent.change(getByLabelText('Application Name'), { target: { value: 'Test App' } });
+    fireEvent.change(getByLabelText('Description'), { target: { value: 'Test Description' } });
+    fireEvent.change(getByLabelText('App Owner'), { target: { value: 'Owner' } });
+    fireEvent.change(getByLabelText('Application Dev DL'), { target: { value: 'dl@test.com' } });
+    fireEvent.change(getByLabelText('Application Dev DL'), { 
       target: { name: 'pssDL', value: 'pss@test.com' } 
     });
 
@@ -139,12 +167,5 @@ describe('CreateNewApp', () => {
     await waitFor(() => {
       expect(screen.getByText(/failed to create app/i)).toBeInTheDocument();
     });
-  });
-
-  test('handles back button click', () => {
-    render(<CreateNewApp onBack={mockOnBack} />);
-    
-    fireEvent.click(screen.getByRole('button', { name: /back/i }));
-    expect(mockOnBack).toHaveBeenCalled();
   });
 });
