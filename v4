@@ -10,19 +10,6 @@ const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 jest.useFakeTimers();
 
-// Helper function to get specific DL fields
-const getContactDLField = () => 
-  screen.getByRole('textbox', { 
-    name: /Application Dev DL/i, 
-    selector: '[name="contactDL"]' 
-  });
-
-const getPSSDLField = () => 
-  screen.getByRole('textbox', { 
-    name: /Application Dev DL/i, 
-    selector: '[name="pssDL"]' 
-  });
-
 describe('CreateNewApp', () => {
   const mockOnBack = jest.fn();
 
@@ -31,7 +18,12 @@ describe('CreateNewApp', () => {
     mockedAxios.post.mockReset();
   });
 
-  // Previous tests remain the same...
+  // Helper function to get specific fields
+  const getContactDLField = () => 
+    screen.getByLabelText('Application Dev DL', { selector: '[name="contactDL"]' });
+
+  const getPSSDLField = () => 
+    screen.getByLabelText('Application Dev DL', { selector: '[name="pssDL"]' });
 
   test('submits form successfully', async () => {
     mockedAxios.post.mockResolvedValue({ status: 201 });
@@ -60,7 +52,7 @@ describe('CreateNewApp', () => {
       target: { value: 'Owner' } 
     });
 
-    // Handle DL fields using specific selectors
+    // Handle duplicate DL fields
     fireEvent.change(getContactDLField(), { 
       target: { value: 'dl@test.com' } 
     });
@@ -114,7 +106,7 @@ describe('CreateNewApp', () => {
       target: { value: 'Owner' } 
     });
 
-    // Handle DL fields using specific selectors
+    // Handle duplicate DL fields
     fireEvent.change(getContactDLField(), { 
       target: { value: 'dl@test.com' } 
     });
@@ -128,4 +120,6 @@ describe('CreateNewApp', () => {
       expect(screen.getByText(/failed to create app/i)).toBeInTheDocument();
     });
   });
+
+  // Keep other tests the same...
 });
