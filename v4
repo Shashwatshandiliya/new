@@ -9,7 +9,155 @@ jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 jest.useFakeTimers();
+import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import CreateNewApp from './CreateNewApp';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 
+jest.mock('axios');
+jest.mock('react-toastify', () => ({
+  toast: { warn: jest.fn(), success: jest.fn(), error: jest.fn() },
+  ToastContainer: () => <div />,
+}));
+
+describe('CreateNewApp Component', () => {
+  const onBackMock = jest.fn();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test('renders all form fields and buttons', () => {
+    render(<CreateNewApp onBack={onBackMock} />);
+
+    // Header
+    expect(screen.getByText(/Add New Application/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Submit/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Save/i })).toBeInTheDocument();
+
+    // Text fields
+    ['Application ID', 'ITAM Name', 'Application Name', 'Description', 'App Owner'].forEach(label => {
+      expect(screen.getByLabelText(label)).toBeInTheDocument();
+    });
+    // There are two fields labeled 'Application Dev DL'
+    const dlFields = screen.getAllByLabelText('Application Dev DL');
+    expect(dlFields).toHaveLength(2);
+
+    // Date time fields
+    expect(screen.getByLabelText('Downtime Start')).toBeInTheDocument();
+    expect(screen.getByLabelText('Downtime End')).toBeInTheDocument();
+
+    // Select
+    expect(screen.getByLabelText('Recurring Downtime')).toBeInTheDocument();
+  });
+
+  test('calls onBack when back button is clicked', () => {
+    render(<CreateNewApp onBack={onBackMock} />);
+    const backButton = screen.getByRole('button', { name: /Add New Application/i }).previousSibling;
+    userEvent.click(backButton as HTMLElement);
+    expect(onBackMock).toHaveBeenCalled();
+  });
+
+  test('shows warning toast if required fields are missing', async () => {
+    render(<CreateNewApp onBack={onBackMock} />);
+    userEvent.click(screen.getByRole('button', { name: /Submit/i }));
+
+    await waitFor(() => {
+      expect(toast.warn).toHaveBeenCalledWith(
+        'Please fill all required fields before submitting.',
+        expect.objectContaining({ position: 'top-right', autoClose: 3000 })
+      );
+    });
+  });
+
+  test('submits form successfully with valid data', async () => {
+    (axios.post as jest.Mock).mockResolvedValue({ status: 201 });
+
+    render(<CreateNewApp onBack={onBackMock} />);
+
+    // Fill text fields
+    const fillField = (label: string, value: string) => {
+      const input = screen.getByLabelText(label) as HTMLInputElement;
+      userEvent.clear(input);
+      userEvent.type(input, value);
+      expect(input.value).toBe(value);
+    };
+    fillField('Application ID', '123');
+    fillField('ITAM Name', 'ITAM');
+    fillField('Application Name', 'MyApp');
+    fillField('Description', 'Desc');
+    fillField('App Owner', 'Owner');
+
+    // Fill both DLs
+    const [contactDLInput, pssDLInput] = screen.getAllByLabelText('Application Dev DL') as HTMLInputElement[];
+    userEvent.clear(contactDLInput);
+    userEvent.type(contactDLInput, 'dev@dl.com');
+    expect(contactDLInput.value).toBe('dev@dl.com');
+
+    userEvent.clear(pssDLInput);
+    userEvent.type(pssDLInput, 'pss@dl.com');
+    expect(pssDLInput.value).toBe('pss@dl.com');
+
+    // Downtime
+    const start = screen.getByLabelText('Downtime Start') as HTMLInputElement;
+    userEvent.type(start, '2025-05-21T10:00');
+    expect(start.value).toBe('2025-05-21T10:00');
+
+    const end = screen.getByLabelText('Downtime End') as HTMLInputElement;
+    userEvent.type(end, '2025-05-21T12:00');
+    expect(end.value).toBe('2025-05-21T12:00');
+
+    // Select recurring downtime
+    const select = screen.getByLabelText('Recurring Downtime');
+    userEvent.click(select);
+    userEvent.click(screen.getByRole('option', { name: 'Yes' }));
+    expect(select).toHaveTextContent('Yes');
+
+    // Submit
+    userEvent.click(screen.getByRole('button', { name: /Submit/i }));
+
+    await waitFor(() => {
+      expect(axios.post).toHaveBeenCalledWith(
+        '/fmces/p80/v1/data-policy/create',
+        expect.any(Object)
+      );
+      expect(toast.success).toHaveBeenCalledWith('App created successfully!');
+      expect(onBackMock).toHaveBeenCalled();
+    });
+  });
+
+  test('handles submission error', async () => {
+    (axios.post as jest.Mock).mockRejectedValue(new Error('fail'));
+
+    render(<CreateNewApp onBack={onBackMock} />);
+
+    // Fill required fields
+    ['Application ID', 'ITAM Name', 'Application Name', 'Description', 'App Owner'].forEach(label => {
+      const input = screen.getByLabelText(label) as HTMLInputElement;
+      userEvent.clear(input);
+      userEvent.type(input, 'x');
+    });
+    const [contactDL, pssDL] = screen.getAllByLabelText('Application Dev DL') as HTMLInputElement[];
+    userEvent.clear(contactDL);
+    userEvent.type(contactDL, 'x');
+    userEvent.clear(pssDL);
+    userEvent.type(pssDL, 'x');
+
+    userEvent.click(screen.getByLabelText('Recurring Downtime'));
+    userEvent.click(screen.getByRole('option', { name: 'Yes' }));
+
+    userEvent.click(screen.getByRole('button', { name: /Submit/i }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        'Failed to create App.',
+        expect.objectContaining({ position: 'top-right', autoClose: 3000 })
+      );
+    });
+  });
+});
 describe('CreateNewApp', () => {
   const mockOnBack = jest.fn();
 
