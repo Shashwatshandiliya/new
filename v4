@@ -2,13 +2,8 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import CreateNewApp from './CreateNewApp';
-import { Service } from '../../../Root/import';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-
-jest.mock('../../../Root/import', () => ({
-  Service: { postService: jest.fn() },
-}));
 
 jest.mock('axios');
 jest.mock('react-toastify', () => ({
@@ -32,7 +27,7 @@ describe('CreateNewApp Component', () => {
     expect(screen.getByRole('button', { name: /Save/i })).toBeInTheDocument();
 
     // Text fields
-    ['Application ID', 'ITAM Name', 'Application Name', 'Description', 'App Owner', 'Application Dev DL'].forEach(label => {
+    ['Application ID', 'ITAM Name', 'Application Name', 'Description', 'App Owner', 'Application Dev DL', 'PSS DL'].forEach(label => {
       expect(screen.getByLabelText(label)).toBeInTheDocument();
     });
 
@@ -53,8 +48,7 @@ describe('CreateNewApp Component', () => {
 
   test('shows warning toast if required fields are missing', async () => {
     render(<CreateNewApp onBack={onBackMock} />);
-    const submitBtn = screen.getByRole('button', { name: /Submit/i });
-    userEvent.click(submitBtn);
+    userEvent.click(screen.getByRole('button', { name: /Submit/i }));
 
     await waitFor(() => {
       expect(toast.warn).toHaveBeenCalledWith(
@@ -65,13 +59,14 @@ describe('CreateNewApp Component', () => {
   });
 
   test('submits form successfully with valid data', async () => {
-    (Service.postService as jest.Mock).mockResolvedValue({ status: 201 });
+    (axios.post as jest.Mock).mockResolvedValue({ status: 201 });
 
     render(<CreateNewApp onBack={onBackMock} />);
 
-    // Fill fields
+    // Fill text fields
     const fillField = (label: string, value: string) => {
       const input = screen.getByLabelText(label) as HTMLInputElement;
+      userEvent.clear(input);
       userEvent.type(input, value);
       expect(input.value).toBe(value);
     };
@@ -96,16 +91,14 @@ describe('CreateNewApp Component', () => {
     // Select recurring downtime
     const select = screen.getByLabelText('Recurring Downtime');
     userEvent.click(select);
-    const optionYes = screen.getByRole('option', { name: 'Yes' });
-    userEvent.click(optionYes);
+    userEvent.click(screen.getByRole('option', { name: 'Yes' }));
     expect(select).toHaveTextContent('Yes');
 
     // Submit
-    const submitBtn = screen.getByRole('button', { name: /Submit/i });
-    userEvent.click(submitBtn);
+    userEvent.click(screen.getByRole('button', { name: /Submit/i }));
 
     await waitFor(() => {
-      expect(Service.postService).toHaveBeenCalledWith(
+      expect(axios.post).toHaveBeenCalledWith(
         '/fmces/p80/v1/data-policy/create',
         expect.any(Object)
       );
@@ -115,23 +108,27 @@ describe('CreateNewApp Component', () => {
   });
 
   test('handles submission error', async () => {
-    (Service.postService as jest.Mock).mockRejectedValue(new Error('fail'));
+    (axios.post as jest.Mock).mockRejectedValue(new Error('fail'));
 
     render(<CreateNewApp onBack={onBackMock} />);
 
-    // Fill minimal required fields to pass validation
+    // Fill required fields
     ['Application ID', 'ITAM Name', 'Application Name', 'Description', 'App Owner', 'Application Dev DL', 'PSS DL'].forEach(label => {
       const input = screen.getByLabelText(label) as HTMLInputElement;
+      userEvent.clear(input);
       userEvent.type(input, 'x');
     });
-    const select = screen.getByLabelText('Recurring Downtime');
-    userEvent.click(select);
+    userEvent.click(screen.getByLabelText('Recurring Downtime'));
     userEvent.click(screen.getByRole('option', { name: 'Yes' }));
 
     userEvent.click(screen.getByRole('button', { name: /Submit/i }));
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('Failed to create App.', expect.objectContaining({ position: 'top-right', autoClose: 3000 }));
+      expect(toast.error).toHaveBeenCalledWith(
+        'Failed to create App.',
+        expect.objectContaining({ position: 'top-right', autoClose: 3000 })
+      );
     });
   });
 });
+s
