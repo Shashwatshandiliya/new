@@ -1,48 +1,150 @@
-test('displays applications data correctly', async () => {
-  // Ensure fresh mock data
-  mockedAxios.get.mockResolvedValueOnce({ data: [{
-    ...mockAppsData[0],
-    appID: '1', // Match expected string type
-    totalNumberOfFeatures: 2,
-    totalNumberOfActions: 3
-  }]});
+import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import CreateNewApp from './CreateNewApp';
+import axios from 'axios';
+import { ToastContainer } from 'react-toastify';
+import '@testing-library/jest-dom';
 
-  render(<AppManagementview {...mockProps} />);
-  
-  // Wait for data to load
-  await waitFor(() => {
-    const row = screen.getByRole('row', {
-      name: /Test App/i
-    });
+jest.mock('axios');
+const mockedAxios = axios as jest.Mocked<typeof axios>;
+
+describe('CreateNewApp', () => {
+  const mockOnBack = jest.fn();
+
+  beforeEach(() => {
+    mockedAxios.post.mockReset();
+    mockOnBack.mockClear();
+  });
+
+  test('renders all form elements', () => {
+    render(<CreateNewApp onBack={mockOnBack} />);
     
-    // Verify exact cell content
-    expect(within(row).getByRole('cell', { name: 'Test App' })).toBeInTheDocument();
-    expect(within(row).getByRole('cell', { name: '1' })).toBeInTheDocument();
-    expect(within(row).getByRole('cell', { name: 'Enabled' })).toBeInTheDocument();
-    expect(within(row).getByRole('cell', { name: '2' })).toBeInTheDocument(); // Features count
-    expect(within(row).getByRole('cell', { name: '3' })).toBeInTheDocument(); // Actions count
-  });
-});
-
-
-
-test('displays error state when API fails', async () => {
-  // Clear previous mocks
-  mockedAxios.get.mockReset();
-  
-  // Mock specific endpoint failure
-  mockedAxios.get.mockImplementation(url => {
-    if (url.includes('applicationsWithCountOfFeaturesAndActions')) {
-      return Promise.reject(new Error('API Error'));
-    }
-    return Promise.resolve({ data: [] });
+    expect(screen.getByLabelText('Application ID')).toBeInTheDocument();
+    expect(screen.getByLabelText('ITAM Name')).toBeInTheDocument();
+    expect(screen.getByLabelText('Application Name')).toBeInTheDocument();
+    expect(screen.getByLabelText('Description')).toBeInTheDocument();
+    expect(screen.getByLabelText('App Owner')).toBeInTheDocument();
+    expect(screen.getByLabelText('Application Dev DL')).toBeInTheDocument();
+    expect(screen.getByLabelText('Recurring Downtime')).toBeInTheDocument();
+    expect(screen.getByLabelText('Downtime Start')).toBeInTheDocument();
+    expect(screen.getByLabelText('Downtime End')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /submit/i })).toBeInTheDocument();
   });
 
-  render(<AppManagementview {...mockProps} />);
-  
-  await waitFor(() => {
-    expect(screen.getByTestId('error-message')).toHaveTextContent(
-      'Error fetching applications'
+  test('handles form input changes correctly', () => {
+    render(<CreateNewApp onBack={mockOnBack} />);
+    
+    const appIdInput = screen.getByLabelText('Application ID');
+    fireEvent.change(appIdInput, { target: { value: 'TEST123' } });
+    expect(appIdInput).toHaveValue('TEST123');
+
+    const downtimeStart = screen.getByLabelText('Downtime Start');
+    fireEvent.change(downtimeStart, { target: { value: '2023-01-01T00:00' } });
+    expect(downtimeStart).toHaveValue('2023-01-01T00:00');
+  });
+
+  test('handles recurring downtime selection', () => {
+    render(<CreateNewApp onBack={mockOnBack} />);
+    
+    const select = screen.getByLabelText('Recurring Downtime');
+    fireEvent.mouseDown(select);
+    const yesOption = screen.getByRole('option', { name: 'Yes' });
+    fireEvent.click(yesOption);
+    
+    expect(screen.getByText('Yes')).toBeInTheDocument();
+  });
+
+  test('shows validation errors on empty submit', async () => {
+    render(
+      <>
+        <ToastContainer />
+        <CreateNewApp onBack={mockOnBack} />
+      </>
     );
+
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+    
+    await waitFor(() => {
+      expect(screen.getByText(/please fill all required fields/i)).toBeInTheDocument();
+    });
+  });
+
+  test('submits form successfully', async () => {
+    mockedAxios.post.mockResolvedValueOnce({ status: 201 });
+    render(
+      <>
+        <ToastContainer />
+        <CreateNewApp onBack={mockOnBack} />
+      </>
+    );
+
+    // Fill required fields
+    fireEvent.change(screen.getByLabelText('Application ID'), { target: { value: 'TEST123' } });
+    fireEvent.change(screen.getByLabelText('ITAM Name'), { target: { value: 'ITAM1' } });
+    fireEvent.change(screen.getByLabelText('Application Name'), { target: { value: 'Test App' } });
+    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Test Description' } });
+    fireEvent.change(screen.getByLabelText('App Owner'), { target: { value: 'Owner' } });
+    fireEvent.change(screen.getByLabelText('Application Dev DL'), { target: { value: 'dl@test.com' } });
+    fireEvent.change(screen.getByLabelText('Application Dev DL'), { 
+      target: { name: 'pssDL', value: 'pss@test.com' } 
+    });
+
+    // Select recurring downtime
+    fireEvent.mouseDown(screen.getByLabelText('Recurring Downtime'));
+    fireEvent.click(screen.getByRole('option', { name: 'Yes' }));
+
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+
+    await waitFor(() => {
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        'http://uklvauems02a.uk.standardchartered.com:8083/fmces/v1/application/create',
+        expect.objectContaining({
+          appID: 'TEST123',
+          appName: 'Test App',
+          isRecurringDowntime: true
+        })
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/app created successfully/i)).toBeInTheDocument();
+      setTimeout(() => {
+        expect(mockOnBack).toHaveBeenCalled();
+      }, 1000);
+    });
+  });
+
+  test('handles form submission error', async () => {
+    mockedAxios.post.mockRejectedValueOnce(new Error('API Error'));
+    render(
+      <>
+        <ToastContainer />
+        <CreateNewApp onBack={mockOnBack} />
+      </>
+    );
+
+    // Fill required fields
+    fireEvent.change(screen.getByLabelText('Application ID'), { target: { value: 'TEST123' } });
+    fireEvent.change(screen.getByLabelText('ITAM Name'), { target: { value: 'ITAM1' } });
+    fireEvent.change(screen.getByLabelText('Application Name'), { target: { value: 'Test App' } });
+    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Test Description' } });
+    fireEvent.change(screen.getByLabelText('App Owner'), { target: { value: 'Owner' } });
+    fireEvent.change(screen.getByLabelText('Application Dev DL'), { target: { value: 'dl@test.com' } });
+    fireEvent.change(screen.getByLabelText('Application Dev DL'), { 
+      target: { name: 'pssDL', value: 'pss@test.com' } 
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/failed to create app/i)).toBeInTheDocument();
+    });
+  });
+
+  test('handles back button click', () => {
+    render(<CreateNewApp onBack={mockOnBack} />);
+    
+    fireEvent.click(screen.getByRole('button', { name: /back/i }));
+    expect(mockOnBack).toHaveBeenCalled();
   });
 });
