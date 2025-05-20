@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
 import DeleteExistingApp from './DeleteExistingApp';
 import axios from 'axios';
 import { ToastContainer } from 'react-toastify';
@@ -36,9 +36,21 @@ describe('DeleteExistingApp', () => {
     render(<DeleteExistingApp appId={mockAppId} onBack={mockOnBack} />);
     
     await waitFor(() => {
+      // Text fields
       expect(screen.getByLabelText('Application ID')).toBeDisabled();
       expect(screen.getByLabelText('ITAM Name')).toBeDisabled();
-      expect(screen.getByLabelText('Recurring Downtime')).toBeDisabled();
+      expect(screen.getByLabelText('Application Name')).toBeDisabled();
+      expect(screen.getByLabelText('Description')).toBeDisabled();
+      expect(screen.getByLabelText('App Owner')).toBeDisabled();
+      expect(screen.getByLabelText('Application Dev DL')).toBeDisabled();
+
+      // Date fields
+      expect(screen.getByLabelText('Downtime Start')).toBeDisabled();
+      expect(screen.getByLabelText('Downtime End')).toBeDisabled();
+
+      // Select component
+      const select = screen.getByLabelText('Recurring Downtime');
+      expect(select).toBeDisabled();
     });
   });
 
@@ -51,6 +63,7 @@ describe('DeleteExistingApp', () => {
       );
       expect(screen.getByDisplayValue('TEST123')).toBeInTheDocument();
       expect(screen.getByDisplayValue('Test App')).toBeInTheDocument();
+      expect(screen.getByText('Yes')).toBeInTheDocument();
     });
   });
 
@@ -62,8 +75,9 @@ describe('DeleteExistingApp', () => {
       </>
     );
 
-    fireEvent.click(screen.getByText('Delete'));
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
     expect(screen.getByText('Delete App')).toBeInTheDocument();
+    expect(screen.getByText('Deleting will remove App and all related features/actions')).toBeInTheDocument();
   });
 
   test('successfully deletes app and navigates back', async () => {
@@ -75,10 +89,13 @@ describe('DeleteExistingApp', () => {
     );
 
     // Open drawer
-    fireEvent.click(screen.getByText('Delete'));
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
     
-    // Confirm delete
-    fireEvent.click(screen.getByText('Delete'));
+    // Get confirmation button within drawer
+    const drawer = screen.getByRole('presentation');
+    const confirmDelete = within(drawer).getByRole('button', { name: /delete/i });
+    
+    fireEvent.click(confirmDelete);
 
     await waitFor(() => {
       expect(mockedAxios.delete).toHaveBeenCalledWith(
@@ -87,7 +104,7 @@ describe('DeleteExistingApp', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('App deleted successfully!')).toBeInTheDocument();
+      expect(screen.getByText(/app deleted successfully/i)).toBeInTheDocument();
     });
 
     act(() => {
@@ -107,11 +124,13 @@ describe('DeleteExistingApp', () => {
       </>
     );
 
-    fireEvent.click(screen.getByText('Delete'));
-    fireEvent.click(screen.getByText('Delete'));
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    const drawer = screen.getByRole('presentation');
+    const confirmDelete = within(drawer).getByRole('button', { name: /delete/i });
+    fireEvent.click(confirmDelete);
 
     await waitFor(() => {
-      expect(screen.getByText('Failed to submit delete. Please try again.')).toBeInTheDocument();
+      expect(screen.getByText(/failed to submit delete/i)).toBeInTheDocument();
     });
   });
 
@@ -122,6 +141,7 @@ describe('DeleteExistingApp', () => {
     
     await waitFor(() => {
       expect(screen.queryByDisplayValue('TEST123')).not.toBeInTheDocument();
+      expect(screen.getByLabelText('Application ID')).toHaveValue('');
     });
   });
 
@@ -135,5 +155,16 @@ describe('DeleteExistingApp', () => {
     await waitFor(() => {
       expect(screen.getByText('No')).toBeInTheDocument();
     });
+  });
+
+  test('handles back button click', async () => {
+    render(<DeleteExistingApp appId={mockAppId} onBack={mockOnBack} />);
+    
+    const backButton = screen.getByRole('button', { 
+      name: /back/i 
+    });
+    
+    fireEvent.click(backButton);
+    expect(mockOnBack).toHaveBeenCalled();
   });
 });
