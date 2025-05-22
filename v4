@@ -276,43 +276,47 @@ const EntitlementView: React.FC<EntitlementProps> = ({ onNewEntitlement }) => {
                 </Tabs>
 
                 <Box sx={{ pt: 2, height: 'calc(100vh - 260px)', overflow: 'auto' }}>
-                  {selectedTab === 0 && (
-                    <Box>
-                      <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                        <Button variant="outlined" startIcon={<DeleteIcon />} sx={{ color: 'white', borderColor: 'white' }}>Delete</Button>
-                        <Button variant="contained" startIcon={<EditIcon />}>Edit</Button>
-                      </Box>
+                {selectedTab === 0 && (
+    <Box>
+      <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+        <Button variant="outlined" startIcon={<DeleteIcon />} sx={{ color: 'white', borderColor: 'white' }}>Delete</Button>
+        <Button variant="contained" startIcon={<EditIcon />}>Edit</Button>
+      </Box>
 
-                      <Box sx={{ mt: 2 }}>
-                        <Typography variant="body1" sx={{ color: 'white' }}>Description</Typography>
-                        <Box sx={{ backgroundColor: '#FFFFFF0D', p: 2, borderRadius: 1, color: 'white' }}>
-                          {drawerData.description}
-                        </Box>
-                      </Box>
+      <Box sx={{ mt: 2 }}>
+        <Typography variant="body1" sx={{ color: 'white' }}>Description</Typography>
+        <Box sx={{ backgroundColor: '#FFFFFF0D', p: 2, borderRadius: 1, color: 'white' }}>
+          {drawerData.description}
+        </Box>
+      </Box>
 
-                      <Box sx={{ mt: 2 }}>
-                        <Typography variant="h6" sx={{ color: 'white' }}>Policies & Data Profiles</Typography>
-                        <Grid container spacing={2} sx={{ mt: 1 }}>
-                          <Grid item xs={6}>
-                            <Box sx={{ backgroundColor: '#FFFFFF0D', p: 2, borderRadius: 1 }}>
-                              <Typography variant="subtitle2" sx={{ color: '#2BCBC1', mb: 1 }}>Policies</Typography>
-                              {drawerData.policies.map((policy, index) => (
-                                <Typography key={index} sx={{ color: 'white' }}>- {policy}</Typography>
-                              ))}
-                            </Box>
-                          </Grid>
-                          <Grid item xs={6}>
-                            <Box sx={{ backgroundColor: '#FFFFFF0D', p: 2, borderRadius: 1 }}>
-                              <Typography variant="subtitle2" sx={{ color: '#2BCBC1', mb: 1 }}>Data Profiles</Typography>
-                              {drawerData.dataProfiles.map((profile, index) => (
-                                <Typography key={index} sx={{ color: 'white' }}>- {profile}</Typography>
-                              ))}
-                            </Box>
-                          </Grid>
-                        </Grid>
-                      </Box>
-                    </Box>
-                  )}
+      <Box sx={{ mt: 2 }}>
+        <Box sx={{ backgroundColor: '#FFFFFF0D', p: 2, borderRadius: 1 }}>
+          <Typography variant="subtitle2" sx={{ color: '#2BCBC1', mb: 1 }}>
+            Policies
+          </Typography>
+          {drawerData.policies.length > 0 ? (
+            drawerData.policies.map((policy, index) => (
+              <Typography key={index} sx={{ color: 'white', mb: 0.5 }}>• {policy}</Typography>
+            ))
+          ) : (
+            <Typography sx={{ color: '#888' }}>No policies found</Typography>
+          )}
+
+          <Typography variant="subtitle2" sx={{ color: '#2BCBC1', mt: 2, mb: 1 }}>
+            Data Profiles
+          </Typography>
+          {drawerData.dataProfiles.length > 0 ? (
+            drawerData.dataProfiles.map((profile, index) => (
+              <Typography key={index} sx={{ color: 'white', mb: 0.5 }}>• {profile}</Typography>
+            ))
+          ) : (
+            <Typography sx={{ color: '#888' }}>No data profiles found</Typography>
+          )}
+        </Box>
+      </Box>
+    </Box>
+  )}
 
                   {selectedTab === 1 && (
                     <Box sx={{ mt: 2 }}>
