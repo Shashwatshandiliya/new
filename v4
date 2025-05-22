@@ -354,7 +354,7 @@ const EntitlementView: React.FC<EntitlementProps> = ({ onNewEntitlement }) => {
 </Box>
     </Box>
   )}
-
+{/*
                   {selectedTab === 1 && (
                     <Box sx={{ mt: 2 }}>
                       {dummyFeatures.map((fa, index) => (
@@ -382,7 +382,60 @@ const EntitlementView: React.FC<EntitlementProps> = ({ onNewEntitlement }) => {
                       ))}
                     </Box>
                   )}
+                              */}
+                  // Update the Features & Actions tab content
+{selectedTab === 1 && (
+  <Box sx={{ mt: 2 }}>
+    <Box sx={{ 
+      backgroundColor: '#FFFFFF0D', 
+      borderRadius: 1,
+      overflow: 'hidden'
+    }}>
+      <Box sx={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 2fr',
+        borderBottom: '1px solid #2C3F5E',
+        backgroundColor: '#262B36',
+        px: 2,
+        py: 1
+      }}>
+        <Typography variant="subtitle2" sx={{ color: '#2BCBC1' }}>Feature</Typography>
+        <Typography variant="subtitle2" sx={{ color: '#2BCBC1' }}>Actions</Typography>
+      </Box>
 
+      {dummyFeatures.map((fa, index) => (
+        <Box 
+          key={index}
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 2fr',
+            borderBottom: index < dummyFeatures.length - 1 ? '1px solid #2C3F5E' : 'none',
+            px: 2,
+            py: 1.5
+          }}
+        >
+          <Typography sx={{ color: 'white', fontWeight: 500 }}>{fa.feature}</Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {fa.actions.map((action, actionIndex) => (
+              <Typography 
+                key={actionIndex} 
+                sx={{ 
+                  color: 'white',
+                  '&:after': {
+                    content: actionIndex < fa.actions.length - 1 ? '","' : 'none',
+                    color: '#666'
+                  }
+                }}
+              >
+                {action}
+              </Typography>
+            ))}
+          </Box>
+        </Box>
+      ))}
+    </Box>
+  </Box>
+)}
                   {selectedTab === 2 && (
                     <Box sx={{ mt: 2 }}>
                       {dummyHistory.map((entry, index) => (
