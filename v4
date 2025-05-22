@@ -291,30 +291,67 @@ const EntitlementView: React.FC<EntitlementProps> = ({ onNewEntitlement }) => {
       </Box>
 
       <Box sx={{ mt: 2 }}>
-        <Box sx={{ backgroundColor: '#FFFFFF0D', p: 2, borderRadius: 1 }}>
-          <Typography variant="subtitle2" sx={{ color: '#2BCBC1', mb: 1 }}>
-            Policies
-          </Typography>
-          {drawerData.policies.length > 0 ? (
-            drawerData.policies.map((policy, index) => (
-              <Typography key={index} sx={{ color: 'white', mb: 0.5 }}>• {policy}</Typography>
-            ))
-          ) : (
-            <Typography sx={{ color: '#888' }}>No policies found</Typography>
-          )}
+  <Typography variant="h6" sx={{ 
+    color: 'white', 
+    mb: 2,
+    paddingBottom: '4px',
+    borderBottom: '1px solid #2BCBC1'
+  }}>
+    Access Components
+  </Typography>
 
-          <Typography variant="subtitle2" sx={{ color: '#2BCBC1', mt: 2, mb: 1 }}>
-            Data Profiles
+  <Box sx={{ backgroundColor: '#FFFFFF0D', p: 2, borderRadius: 1 }}>
+    <Box sx={{ mb: 3 }}>
+      <Typography variant="subtitle1" sx={{ 
+        color: '#2BCBC1', 
+        fontWeight: 500,
+        mb: 1 
+      }}>
+        Associated Policies
+      </Typography>
+      {drawerData.policies.length > 0 ? (
+        drawerData.policies.map((policy, index) => (
+          <Typography key={index} sx={{ 
+            color: 'white', 
+            mb: 0.5,
+            pl: 1 
+          }}>
+            • {policy}
           </Typography>
-          {drawerData.dataProfiles.length > 0 ? (
-            drawerData.dataProfiles.map((profile, index) => (
-              <Typography key={index} sx={{ color: 'white', mb: 0.5 }}>• {profile}</Typography>
-            ))
-          ) : (
-            <Typography sx={{ color: '#888' }}>No data profiles found</Typography>
-          )}
-        </Box>
-      </Box>
+        ))
+      ) : (
+        <Typography sx={{ color: '#888', fontStyle: 'italic' }}>
+          No policies assigned
+        </Typography>
+      )}
+    </Box>
+
+    <Box>
+      <Typography variant="subtitle1" sx={{ 
+        color: '#2BCBC1', 
+        fontWeight: 500,
+        mb: 1 
+      }}>
+        Data Profiles
+      </Typography>
+      {drawerData.dataProfiles.length > 0 ? (
+        drawerData.dataProfiles.map((profile, index) => (
+          <Typography key={index} sx={{ 
+            color: 'white', 
+            mb: 0.5,
+            pl: 1 
+          }}>
+            • {profile}
+          </Typography>
+        ))
+      ) : (
+        <Typography sx={{ color: '#888', fontStyle: 'italic' }}>
+          No data profiles configured
+        </Typography>
+      )}
+    </Box>
+  </Box>
+</Box>
     </Box>
   )}
 
