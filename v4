@@ -162,7 +162,11 @@ const EntitlementView: React.FC<EntitlementProps> = ({ onNewEntitlement }) => {
             backgroundColor: active ? '#2BCBC11A' : '#ff00001A',
             borderRadius: '20px',
             color: active ? '#2BCBC1' : '#ff0000',
-            p: '0.25rem 0.5rem'
+            p: '0.25rem 0.5rem',
+            fontSize: '0.75rem',
+            display: 'inline-block',
+            minWidth: '60px',
+            textAlign: 'center'
           }}>
             {active ? 'Active' : 'Inactive'}
           </Box>
@@ -240,20 +244,34 @@ const EntitlementView: React.FC<EntitlementProps> = ({ onNewEntitlement }) => {
             anchor="right"
             open={isDrawerOpen}
             onClose={() => setIsDrawerOpen(false)}
-            sx={{ '& .MuiDrawer-paper': { width: 600, backgroundColor: '#1A2028' } }}
+            sx={{ '& .MuiDrawer-paper': { width: 466, backgroundColor: '#1A2028' } }}
           >
             {drawerData ? (
               <Box sx={{ p: 2 }}>
                 <Box sx={{ backgroundColor: '#262B36', p: 2, borderRadius: 1 }}>
-                  <Typography variant="h6" sx={{ color: 'white' }}>{drawerData.name}</Typography>
+                  <Typography variant="h6" sx={{ color: 'white', fontSize: '1.125rem' }}>{drawerData.name}</Typography>
                   <Grid container spacing={1} sx={{ mt: 2 }}>
-                    <Grid item xs={6} sx={{ backgroundColor: '#FFFFFF0D', p: 1 }}>ID: {drawerData.ID}</Grid>
-                    <Grid item xs={6} sx={{ backgroundColor: '#FFFFFF0D', p: 1 }}>
+                    <Grid item xs={6} sx={{ 
+                      backgroundColor: '#FFFFFF0D', 
+                      p: '4px 8px',
+                      borderRadius: '4px',
+                      fontSize: '0.875rem'
+                    }}>
+                      ID: {drawerData.ID}
+                    </Grid>
+                    <Grid item xs={6} sx={{ 
+                      backgroundColor: '#FFFFFF0D', 
+                      p: '4px 8px',
+                      borderRadius: '4px',
+                      textAlign: 'right'
+                    }}>
                       <Box component="span" sx={{
                         backgroundColor: drawerData.isActive ? '#2BCBC11A' : '#ff00001A',
                         borderRadius: '20px',
                         color: drawerData.isActive ? '#2BCBC1' : '#ff0000',
-                        p: '0.25rem 0.5rem'
+                        p: '2px 8px',
+                        fontSize: '0.75rem',
+                        display: 'inline-block'
                       }}>
                         {drawerData.isActive ? 'Active' : 'Inactive'}
                       </Box>
@@ -267,7 +285,12 @@ const EntitlementView: React.FC<EntitlementProps> = ({ onNewEntitlement }) => {
                   sx={{ 
                     mt: 2,
                     '& .MuiTabs-indicator': { backgroundColor: '#2BCBC1' },
-                    '& .MuiTab-root': { color: '#FFF' }
+                    '& .MuiTab-root': { 
+                      color: '#FFF',
+                      fontSize: '0.875rem',
+                      minWidth: 'auto',
+                      padding: '8px 16px'
+                    }
                   }}
                 >
                   <Tab label="Details" />
@@ -276,182 +299,176 @@ const EntitlementView: React.FC<EntitlementProps> = ({ onNewEntitlement }) => {
                 </Tabs>
 
                 <Box sx={{ pt: 2, height: 'calc(100vh - 260px)', overflow: 'auto' }}>
-                {selectedTab === 0 && (
-    <Box>
-      <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-        <Button variant="outlined" startIcon={<DeleteIcon />} sx={{ color: 'white', borderColor: 'white' }}>Delete</Button>
-        <Button variant="contained" startIcon={<EditIcon />}>Edit</Button>
-      </Box>
+                  {selectedTab === 0 && (
+                    <Box>
+                      <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                        <Button variant="outlined" startIcon={<DeleteIcon />} sx={{ 
+                          color: 'white', 
+                          borderColor: '#444',
+                          fontSize: '0.75rem',
+                          py: 0.5
+                        }}>
+                          Delete
+                        </Button>
+                        <Button variant="contained" startIcon={<EditIcon />} sx={{ fontSize: '0.75rem', py: 0.5 }}>
+                          Edit
+                        </Button>
+                      </Box>
 
-      <Box sx={{ mt: 2 }}>
-        <Typography variant="body1" sx={{ color: 'white' }}>Description</Typography>
-        <Box sx={{ backgroundColor: '#FFFFFF0D', p: 2, borderRadius: 1, color: 'white' }}>
-          {drawerData.description}
-        </Box>
-      </Box>
-
-      <Box sx={{ mt: 2 }}>
-  <Typography variant="h6" sx={{ 
-    color: 'white', 
-    mb: 2,
-    paddingBottom: '4px',
-    borderBottom: '1px solid #2BCBC1'
-  }}>
-    Access Components
-  </Typography>
-
-  <Box sx={{ backgroundColor: '#FFFFFF0D', p: 2, borderRadius: 1 }}>
-    <Box sx={{ mb: 3 }}>
-      <Typography variant="subtitle1" sx={{ 
-        color: '#2BCBC1', 
-        fontWeight: 500,
-        mb: 1 
-      }}>
-        Associated Policies
-      </Typography>
-      {drawerData.policies.length > 0 ? (
-        drawerData.policies.map((policy, index) => (
-          <Typography key={index} sx={{ 
-            color: 'white', 
-            mb: 0.5,
-            pl: 1 
-          }}>
-            • {policy}
-          </Typography>
-        ))
-      ) : (
-        <Typography sx={{ color: '#888', fontStyle: 'italic' }}>
-          No policies assigned
-        </Typography>
-      )}
-    </Box>
-
-    <Box>
-      <Typography variant="subtitle1" sx={{ 
-        color: '#2BCBC1', 
-        fontWeight: 500,
-        mb: 1 
-      }}>
-        Data Profiles
-      </Typography>
-      {drawerData.dataProfiles.length > 0 ? (
-        drawerData.dataProfiles.map((profile, index) => (
-          <Typography key={index} sx={{ 
-            color: 'white', 
-            mb: 0.5,
-            pl: 1 
-          }}>
-            • {profile}
-          </Typography>
-        ))
-      ) : (
-        <Typography sx={{ color: '#888', fontStyle: 'italic' }}>
-          No data profiles configured
-        </Typography>
-      )}
-    </Box>
-  </Box>
-</Box>
-    </Box>
-  )}
-{/*
-                  {selectedTab === 1 && (
-                    <Box sx={{ mt: 2 }}>
-                      {dummyFeatures.map((fa, index) => (
-                        <Box key={index} sx={{ mb: 2, backgroundColor: '#FFFFFF0D', p: 2, borderRadius: 1 }}>
-                          <Typography variant="subtitle1" sx={{ color: 'white', fontWeight: 'bold' }}>
-                            {fa.feature}
-                          </Typography>
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
-                            {fa.actions.map((action, actionIndex) => (
-                              <Box
-                                key={actionIndex}
-                                sx={{
-                                  backgroundColor: '#2C3F5E',
-                                  borderRadius: '4px',
-                                  px: 1,
-                                  py: 0.5,
-                                  color: 'white'
-                                }}
-                              >
-                                {action}
-                              </Box>
-                            ))}
-                          </Box>
+                      <Box sx={{ mt: 2 }}>
+                        <Typography variant="body2" sx={{ color: '#AAA', mb: 1 }}>Description</Typography>
+                        <Box sx={{ 
+                          backgroundColor: '#2A2F38', 
+                          p: 2, 
+                          borderRadius: 1, 
+                          color: 'white',
+                          fontSize: '0.875rem'
+                        }}>
+                          {drawerData.description}
                         </Box>
-                      ))}
+                      </Box>
+
+                      <Box sx={{ mt: 2 }}>
+                        <Box sx={{ backgroundColor: '#2A2F38', p: 2, borderRadius: 1 }}>
+                          <Typography variant="body2" sx={{ 
+                            color: 'white',
+                            fontWeight: 500,
+                            mb: 1.5
+                          }}>
+                            Associated Policies
+                          </Typography>
+                          {drawerData.policies.length > 0 ? (
+                            drawerData.policies.map((policy, index) => (
+                              <Typography key={index} sx={{ 
+                                color: '#CCC', 
+                                fontSize: '0.875rem',
+                                mb: 1
+                              }}>
+                                • {policy}
+                              </Typography>
+                            ))
+                          ) : (
+                            <Typography sx={{ color: '#666', fontStyle: 'italic', fontSize: '0.875rem' }}>
+                              No policies assigned
+                            </Typography>
+                          )}
+
+                          <Typography variant="body2" sx={{ 
+                            color: 'white',
+                            fontWeight: 500,
+                            mt: 3,
+                            mb: 1.5
+                          }}>
+                            Data Profiles
+                          </Typography>
+                          {drawerData.dataProfiles.length > 0 ? (
+                            drawerData.dataProfiles.map((profile, index) => (
+                              <Typography key={index} sx={{ 
+                                color: '#CCC', 
+                                fontSize: '0.875rem',
+                                mb: 1
+                              }}>
+                                • {profile}
+                              </Typography>
+                            ))
+                          ) : (
+                            <Typography sx={{ color: '#666', fontStyle: 'italic', fontSize: '0.875rem' }}>
+                              No data profiles configured
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
                     </Box>
                   )}
-                              */}
-                  // Update the Features & Actions tab content
-{selectedTab === 1 && (
-  <Box sx={{ mt: 2 }}>
-    <Box sx={{ 
-      backgroundColor: '#FFFFFF0D', 
-      borderRadius: 1,
-      overflow: 'hidden'
-    }}>
-      <Box sx={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 2fr',
-        borderBottom: '1px solid #2C3F5E',
-        backgroundColor: '#262B36',
-        px: 2,
-        py: 1
-      }}>
-        <Typography variant="subtitle2" sx={{ color: '#2BCBC1' }}>Feature</Typography>
-        <Typography variant="subtitle2" sx={{ color: '#2BCBC1' }}>Actions</Typography>
-      </Box>
 
-      {dummyFeatures.map((fa, index) => (
-        <Box 
-          key={index}
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 2fr',
-            borderBottom: index < dummyFeatures.length - 1 ? '1px solid #2C3F5E' : 'none',
-            px: 2,
-            py: 1.5
-          }}
-        >
-          <Typography sx={{ color: 'white', fontWeight: 500 }}>{fa.feature}</Typography>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            {fa.actions.map((action, actionIndex) => (
-              <Typography 
-                key={actionIndex} 
-                sx={{ 
-                  color: 'white',
-                  '&:after': {
-                    content: actionIndex < fa.actions.length - 1 ? '","' : 'none',
-                    color: '#666'
-                  }
-                }}
-              >
-                {action}
-              </Typography>
-            ))}
-          </Box>
-        </Box>
-      ))}
-    </Box>
-  </Box>
-)}
+                  {selectedTab === 1 && (
+                    <Box sx={{ mt: 2 }}>
+                      <Box sx={{ 
+                        backgroundColor: '#2A2F38', 
+                        borderRadius: 1,
+                        overflow: 'hidden'
+                      }}>
+                        <Box sx={{
+                          display: 'grid',
+                          gridTemplateColumns: '1fr 2fr',
+                          borderBottom: '1px solid #444',
+                          backgroundColor: '#262B36',
+                          px: 2,
+                          py: 1
+                        }}>
+                          <Typography variant="body2" sx={{ color: '#AAA', fontWeight: 500 }}>Feature</Typography>
+                          <Typography variant="body2" sx={{ color: '#AAA', fontWeight: 500 }}>Actions</Typography>
+                        </Box>
+
+                        {dummyFeatures.map((fa, index) => (
+                          <Box 
+                            key={index}
+                            sx={{
+                              display: 'grid',
+                              gridTemplateColumns: '1fr 2fr',
+                              borderBottom: index < dummyFeatures.length - 1 ? '1px solid #444' : 'none',
+                              px: 2,
+                              py: 1.5
+                            }}
+                          >
+                            <Typography sx={{ color: 'white', fontSize: '0.875rem' }}>{fa.feature}</Typography>
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                              {fa.actions.map((action, actionIndex) => (
+                                <Typography 
+                                  key={actionIndex} 
+                                  sx={{ 
+                                    color: '#CCC',
+                                    fontSize: '0.875rem',
+                                    '&:after': {
+                                      content: actionIndex < fa.actions.length - 1 ? '","' : 'none',
+                                      color: '#666',
+                                      marginRight: '4px'
+                                    }
+                                  }}
+                                >
+                                  {action}
+                                </Typography>
+                              ))}
+                            </Box>
+                          </Box>
+                        ))}
+                      </Box>
+                    </Box>
+                  )}
+
                   {selectedTab === 2 && (
                     <Box sx={{ mt: 2 }}>
                       {dummyHistory.map((entry, index) => (
-                        <Box key={index} sx={{ mb: 2, backgroundColor: '#FFFFFF0D', p: 2, borderRadius: 1 }}>
+                        <Box key={index} sx={{ 
+                          mb: 2, 
+                          backgroundColor: '#2A2F38', 
+                          p: 2, 
+                          borderRadius: 1 
+                        }}>
                           <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <Typography variant="subtitle2" sx={{ color: '#2BCBC1' }}>
+                            <Typography variant="body2" sx={{ 
+                              color: entry.status === 'Modified' ? '#2BCBC1' : '#AAA',
+                              fontWeight: 500
+                            }}>
                               {entry.status}
                             </Typography>
-                            <Typography variant="caption" sx={{ color: 'white' }}>
+                            <Typography variant="caption" sx={{ color: '#666' }}>
                               {entry.date}
                             </Typography>
                           </Box>
-                          <Typography variant="body2" sx={{ color: 'white', mt: 1 }}>
+                          <Typography variant="body2" sx={{ 
+                            color: 'white', 
+                            mt: 1,
+                            fontSize: '0.875rem'
+                          }}>
                             {entry.title}
                           </Typography>
-                          <Typography variant="caption" sx={{ color: '#888', display: 'block', mt: 0.5 }}>
+                          <Typography variant="caption" sx={{ 
+                            color: '#666', 
+                            display: 'block', 
+                            mt: 0.5,
+                            fontSize: '0.75rem'
+                          }}>
                             Modified by: {entry.modifiedBy}
                           </Typography>
                         </Box>
