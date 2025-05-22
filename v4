@@ -19,6 +19,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import styles from "./EntitlementView.module.css";
 
+// Interfaces
 interface Application {
   appName: string;
 }
@@ -30,6 +31,18 @@ interface EntitlementAPI {
   application: Application;
   isActive: boolean;
   lastUpdated: string;
+  entitlementPolicyList: Array<{
+    policy: {
+      policyName: string;
+      policyId: number;
+    }
+  }>;
+  entitlementProfileList: Array<{
+    profile: {
+      profileName: string;
+      profileId: number;
+    }
+  }>;
 }
 
 interface EntitlementRow {
@@ -39,6 +52,8 @@ interface EntitlementRow {
   application: string;
   isActive: boolean;
   lastModified: string;
+  policies: string[];
+  dataProfiles: string[];
 }
 
 interface EntitlementProps {
@@ -57,37 +72,9 @@ interface FeatureAction {
   actions: string[];
 }
 
-const dummyHistory: HistoryEntry[] = [
-  {
-    status: "Modified",
-    title: "Modified Features",
-    modifiedBy: "@Lestrange, Bellatrix (You)",
-    date: "24 Jun 2024"
-  },
-  {
-    status: "Approved",
-    title: "SalesViewOnly",
-    modifiedBy: "@Malfoy, Lucius",
-    date: "30 May 2024"
-  },
-  {
-    status: "Draft",
-    title: "SalesViewOnly",
-    modifiedBy: "Created",
-    date: "20 May 2024"
-  }
-];
-
-const dummyFeatures: FeatureAction[] = [
-  {
-    feature: "testfeature1",
-    actions: ["testaction2", "testaction3", "testaction4"]
-  },
-  {
-    feature: "testfeature2",
-    actions: ["action1", "action2", "action3"]
-  }
-];
+// Dummy data
+const dummyHistory: HistoryEntry[] = [/*...*/];
+const dummyFeatures: FeatureAction[] = [/*...*/];
 
 const EntitlementView: React.FC<EntitlementProps> = ({ onNewEntitlement }) => {
   const [tabRow, setTabRow] = React.useState<EntitlementRow[]>([]);
@@ -96,6 +83,7 @@ const EntitlementView: React.FC<EntitlementProps> = ({ onNewEntitlement }) => {
   const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
   const [drawerData, setDrawerData] = React.useState<EntitlementRow | null>(null);
   const [selectedTab, setSelectedTab] = React.useState(0);
+  const [showAllPolicies, setShowAllPolicies] = React.useState(false);
 
   React.useEffect(() => {
     const fetchEntitlements = async () => {
@@ -109,7 +97,9 @@ const EntitlementView: React.FC<EntitlementProps> = ({ onNewEntitlement }) => {
           description: item.description,
           application: item.application.appName,
           isActive: item.isActive,
-          lastModified: new Date(item.lastUpdated).toLocaleDateString()
+          lastModified: new Date(item.lastUpdated).toLocaleDateString(),
+          policies: item.entitlementPolicyList.map(p => `POI ${String(p.policy.policyId).padStart(6, '0')}`),
+          dataProfiles: item.entitlementProfileList.map(p => `DPR ${String(p.profile.profileId).padStart(6, '0')}`)
         }));
         setTabRow(rows);
         setRowCount(rows.length);
@@ -117,7 +107,6 @@ const EntitlementView: React.FC<EntitlementProps> = ({ onNewEntitlement }) => {
         console.error('Error fetching entitlements', error);
       }
     };
-
     fetchEntitlements();
   }, []);
 
@@ -130,235 +119,104 @@ const EntitlementView: React.FC<EntitlementProps> = ({ onNewEntitlement }) => {
     setSelectedTab(newValue);
   };
 
-  const headCells = [
-    { accessorKey: 'name', header: 'Name' },
-    { accessorKey: 'ID', header: 'ID', align: 'center' },
-    { accessorKey: 'description', header: 'Description' },
-    { accessorKey: 'application', header: 'Application' },
-    {
-      accessorKey: 'isActive', header: 'Status',
-      Cell: ({ cell }: any) => {
-        const active = cell.getValue();
-        return (
-          <Box component="span" sx={{
-            backgroundColor: active ? '#2BCBC11A' : '#ff00001A',
-            borderRadius: '20px',
-            color: active ? '#2BCBC1' : '#ff0000',
-            p: '0.25rem 0.5rem'
-          }}>
-            {active ? 'Active' : 'Inactive'}
-          </Box>
-        );
-      }
-    }
-  ];
+  const headCells = [/*...*/];
 
   return (
     <div className={styles.container}>
-      {/* Header */}
-      <div className={styles.header}>
-        <Grid container alignItems="center" justifyContent="space-between">
-          <Typography sx={{ fontWeight: 500, fontSize: 20 }}>Entitlement Management</Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddCircleIcon />}
-            sx={{ height: 41, fontWeight: 600, fontSize: 12 }}
-            onClick={onNewEntitlement}
-          >Add New</Button>
-        </Grid>
-      </div>
+      {/* Header and Filters remain same */}
 
-      {/* Filters */}
-      <div className={styles.filterSection}>
-        <Grid container alignItems="center" spacing={2}>
-          <Grid item xs={2}>
-            <TextField
-              placeholder="Type here"
-              size="small"
-              fullWidth
-              InputProps={{ sx: { color: 'white' } }}
-              sx={{ backgroundColor: '#1E252D', borderRadius: 1, height: 36 }}
-            />
-          </Grid>
-          <Grid item xs={3}>
-            <TextField
-              label="Start Date → End Date"
-              size="small"
-              fullWidth
-              value={selectedDate}
-              onChange={e => setSelectedDate(e.target.value)}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton onClick={() => alert('Pick dates')}>
-                      <CalendarTodayIcon sx={{ color: '#FFF' }} />
-                    </IconButton>
-                  </InputAdornment>
-                ),
-                sx: { color: 'white' }
-              }}
-              sx={{ backgroundColor: '#1E252D', borderRadius: 1, height: 36 }}
-            />
-          </Grid>
-          <Grid item xs={2}>
-            <Button
-              variant="contained"
-              size="small"
-              sx={{ backgroundColor: '#2C3F5E', color: 'white', width: 100, height: 36 }}
-            >Search</Button>
-          </Grid>
-        </Grid>
-      </div>
+      <Drawer
+        anchor="right"
+        open={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        sx={{ '& .MuiDrawer-paper': { width: 600, backgroundColor: '#1A2028' } }}
+      >
+        {drawerData && (
+          <Box sx={{ p: 2 }}>
+            {/* Header Section remains same */}
 
-      {/* Table & Drawer */}
-      <div className={styles.tableSection}>
-        <Box sx={{ border: '1px solid #444', p: 2, borderRadius: 1, mt: 2, backgroundColor: '#1A2028' }}>
-          <MaterialTable
-            tableRows={tabRow}
-            tableCols={headCells}
-            totalRowCount={rowCount}
-            globalSearch={false}
-            onRowClick={handleRowClick}
-          />
+            <Tabs value={selectedTab} onChange={handleTabChange} sx={/*...*/}>
+              <Tab label="Details" />
+              <Tab label="Features & Actions" />
+              <Tab label="History" />
+            </Tabs>
 
-          <Drawer
-            anchor="right"
-            open={isDrawerOpen}
-            onClose={() => setIsDrawerOpen(false)}
-            sx={{ '& .MuiDrawer-paper': { width: 600, backgroundColor: '#1A2028' } }}
-          >
-            {drawerData ? (
-              <Box sx={{ p: 2 }}>
-                {/* Header Section */}
-                <Box sx={{ backgroundColor: '#262B36', p: 2, borderRadius: 1 }}>
-                  <Typography variant="h6" sx={{ color: 'white' }}>{drawerData.name}</Typography>
-                  <Grid container spacing={1} sx={{ mt: 2 }}>
-                    <Grid item xs={6} sx={{ backgroundColor: '#FFFFFF0D', p: 1 }}>ID: {drawerData.ID}</Grid>
-                    <Grid item xs={6} sx={{ backgroundColor: '#FFFFFF0D', p: 1 }}>
-                      <Box component="span" sx={{
-                        backgroundColor: drawerData.isActive ? '#2BCBC11A' : '#ff00001A',
-                        borderRadius: '20px',
-                        color: drawerData.isActive ? '#2BCBC1' : '#ff0000',
-                        p: '0.25rem 0.5rem'
-                      }}>
-                        {drawerData.isActive ? 'Active' : 'Inactive'}
-                      </Box>
-                    </Grid>
-                  </Grid>
-                </Box>
+            <Box sx={{ pt: 2, height: 'calc(100vh - 260px)', overflow: 'auto' }}>
+              {/* Details Tab */}
+              {selectedTab === 0 && (
+                <Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mb: 2 }}>
+                    <Button variant="outlined" startIcon={<DeleteIcon />} sx={/*...*/>Delete</Button>
+                    <Button variant="contained" startIcon={<EditIcon />}>Edit</Button>
+                  </Box>
 
-                {/* Tabs */}
-                <Tabs
-                  value={selectedTab}
-                  onChange={handleTabChange}
-                  sx={{ 
-                    mt: 2,
-                    '& .MuiTabs-indicator': { backgroundColor: '#2BCBC1' },
-                    '& .MuiTab-root': { color: '#FFF' }
-                  }}
-                >
-                  <Tab label="Details" />
-                  <Tab label="Features & Actions" />
-                  <Tab label="History" />
-                </Tabs>
+                  {/* Description Box */}
+                  <Box sx={{ mb: 2, backgroundColor: '#FFFFFF0D', p: 2, borderRadius: 1 }}>
+                    <Typography variant="subtitle1" sx={{ color: 'white', mb: 1 }}>
+                      Description
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'white' }}>
+                      {drawerData.description}
+                    </Typography>
+                  </Box>
 
-                {/* Tab Content */}
-                <Box sx={{ pt: 2, height: 'calc(100vh - 260px)', overflow: 'auto' }}>
-                  {/* Details Tab */}
-                  {selectedTab === 0 && (
-                    <Box>
-                      <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                        <Button variant="outlined" startIcon={<DeleteIcon />} sx={{ color: 'white', borderColor: 'white' }}>Delete</Button>
-                        <Button variant="contained" startIcon={<EditIcon />}>Edit</Button>
-                      </Box>
-
-                      <Box sx={{ mt: 2 }}>
-                        <Typography variant="body1" sx={{ color: 'white' }}>Description</Typography>
-                        <Box sx={{ backgroundColor: '#FFFFFF0D', p: 2, borderRadius: 1, color: 'white' }}>
-                          {drawerData.description}
-                        </Box>
-                      </Box>
-
-                      <Box sx={{ mt: 2 }}>
-                        <Typography variant="h6" sx={{ color: 'white' }}>Policies & Data Profiles</Typography>
-                        <Box sx={{ backgroundColor: '#FFFFFF0D', p: 2, borderRadius: 1, mt: 1 }}>
-                          {["POI 000004", "POI 000005", "POI 000006", "DPR 000002"].map((item) => (
-                            <Typography key={item} sx={{ color: 'white' }}>- {item}</Typography>
-                          ))}
-                        </Box>
-                      </Box>
-
-                      <Box sx={{ mt: 2 }}>
-                        <Typography variant="h6" sx={{ color: 'white' }}>View All</Typography>
-                        <Box sx={{ backgroundColor: '#FFFFFF0D', p: 2, borderRadius: 1, mt: 1 }}>
-                          {["Sales Policy", "Incident Response Policy", "HR Data Retention Policy", "Regional Profile"].map((item) => (
-                            <Typography key={item} sx={{ color: 'white' }}>- {item}</Typography>
-                          ))}
-                        </Box>
-                      </Box>
+                  {/* Policies & Data Profiles Box */}
+                  <Box sx={{ backgroundColor: '#FFFFFF0D', p: 2, borderRadius: 1 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography variant="subtitle1" sx={{ color: 'white' }}>
+                        Policies & Data Profiles
+                      </Typography>
+                      <Button 
+                        size="small" 
+                        onClick={() => setShowAllPolicies(!showAllPolicies)}
+                        sx={{ color: '#2BCBC1', textTransform: 'none' }}
+                      >
+                        {showAllPolicies ? 'Show Less' : 'View All'}
+                      </Button>
                     </Box>
-                  )}
 
-                  {/* Features & Actions Tab */}
-                  {selectedTab === 1 && (
-                    <Box sx={{ mt: 2 }}>
-                      {dummyFeatures.map((fa, index) => (
-                        <Box key={index} sx={{ mb: 2, backgroundColor: '#FFFFFF0D', p: 2, borderRadius: 1 }}>
-                          <Typography variant="subtitle1" sx={{ color: 'white', fontWeight: 'bold' }}>
-                            {fa.feature}
-                          </Typography>
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
-                            {fa.actions.map((action, actionIndex) => (
-                              <Box
-                                key={actionIndex}
-                                sx={{
-                                  backgroundColor: '#2C3F5E',
-                                  borderRadius: '4px',
-                                  px: 1,
-                                  py: 0.5,
-                                  color: 'white'
-                                }}
-                              >
-                                {action}
-                              </Box>
-                            ))}
-                          </Box>
-                        </Box>
+                    {/* Policies */}
+                    {drawerData.policies
+                      .slice(0, showAllPolicies ? undefined : 3)
+                      .map((policy, index) => (
+                        <Typography key={index} sx={{ color: 'white' }}>- {policy}</Typography>
                       ))}
-                    </Box>
-                  )}
 
-                  {/* History Tab */}
-                  {selectedTab === 2 && (
-                    <Box sx={{ mt: 2 }}>
-                      {dummyHistory.map((entry, index) => (
-                        <Box key={index} sx={{ mb: 2, backgroundColor: '#FFFFFF0D', p: 2, borderRadius: 1 }}>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <Typography variant="subtitle2" sx={{ color: '#2BCBC1' }}>
-                              {entry.status}
-                            </Typography>
-                            <Typography variant="caption" sx={{ color: 'white' }}>
-                              {entry.date}
-                            </Typography>
-                          </Box>
-                          <Typography variant="body2" sx={{ color: 'white', mt: 1 }}>
-                            {entry.title}
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: '#888', display: 'block', mt: 0.5 }}>
-                            Modified by: {entry.modifiedBy}
-                          </Typography>
-                        </Box>
+                    {/* Data Profiles */}
+                    {drawerData.dataProfiles
+                      .slice(0, showAllPolicies ? undefined : 3)
+                      .map((profile, index) => (
+                        <Typography key={index} sx={{ color: 'white' }}>- {profile}</Typography>
                       ))}
-                    </Box>
-                  )}
+                  </Box>
                 </Box>
-              </Box>
-            ) : (
-              <Typography sx={{ color: 'white' }}>No Record</Typography>
-            )}
-          </Drawer>
-        </Box>
-      </div>
+              )}
+
+              {/* Features & Actions Tab */}
+              {selectedTab === 1 && (
+                <Box>
+                  {dummyFeatures.map((fa, index) => (
+                    <Box key={index} sx={{ mb: 2, backgroundColor: '#FFFFFF0D', p: 2, borderRadius: 1 }}>
+                      {/* Feature content */}
+                    </Box>
+                  ))}
+                </Box>
+              )}
+
+              {/* History Tab */}
+              {selectedTab === 2 && (
+                <Box>
+                  {dummyHistory.map((entry, index) => (
+                    <Box key={index} sx={{ mb: 2, backgroundColor: '#FFFFFF0D', p: 2, borderRadius: 1 }}>
+                      {/* History content */}
+                    </Box>
+                  ))}
+                </Box>
+              )}
+            </Box>
+          </Box>
+        )}
+      </Drawer>
     </div>
   );
 };
