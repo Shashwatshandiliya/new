@@ -28,91 +28,84 @@
     </Box>
 
     <Box sx={{ mt: 2 }}>
-      <Grid container spacing={2}>
-        <Grid item xs={6}>
-          <Box sx={{ backgroundColor: '#2A2F38', p: 2, borderRadius: 1 }}>
-            <Typography variant="body2" sx={{ 
-              color: '#AAA',
-              fontWeight: 500,
-              mb: 1.5
-            }}>
-              Policies
-            </Typography>
-            {drawerData.policies.length > 0 ? (
-              drawerData.policies.map((policy, index) => (
-                <Box key={index} sx={{ 
-                  backgroundColor: '#363D48',
-                  p: 1.5,
-                  borderRadius: '4px',
-                  mb: 1,
-                  border: '1px solid #444'
+      <Box sx={{ 
+        backgroundColor: '#1A2028', 
+        p: 2, 
+        borderRadius: 1,
+        border: '1px solid #2C3F5E'
+      }}>
+        {/* Policies Section */}
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="body2" sx={{ 
+            color: '#FFF',
+            fontWeight: 500,
+            mb: 1.5,
+            fontSize: '0.875rem'
+          }}>
+            Policies
+          </Typography>
+          {drawerData.policies.length > 0 ? (
+            drawerData.policies.map((policy, index) => (
+              <Box key={index} sx={{ 
+                backgroundColor: '#262B36',
+                p: 1.5,
+                borderRadius: '4px',
+                mb: 1,
+                border: '1px solid #2BCBC155',
+                boxShadow: '0 0 8px #2BCBC122'
+              }}>
+                <Typography sx={{ 
+                  color: '#2BCBC1', 
+                  fontSize: '0.875rem',
+                  fontWeight: 500
                 }}>
-                  <Typography sx={{ 
-                    color: 'white', 
-                    fontSize: '0.875rem',
-                    fontWeight: 500
-                  }}>
-                    {policy}
-                  </Typography>
-                  <Typography sx={{ 
-                    color: '#2BCBC1', 
-                    fontSize: '0.75rem',
-                    mt: 0.5
-                  }}>
-                    ID {String(index + 1).padStart(6, '0')}
-                  </Typography>
-                </Box>
-              ))
-            ) : (
-              <Typography sx={{ color: '#666', fontStyle: 'italic', fontSize: '0.875rem' }}>
-                No policies assigned
-              </Typography>
-            )}
-          </Box>
-        </Grid>
+                  {policy}
+                </Typography>
+              </Box>
+            ))
+          ) : (
+            <Typography sx={{ color: '#666', fontStyle: 'italic', fontSize: '0.875rem' }}>
+              No policies assigned
+            </Typography>
+          )}
+        </Box>
 
-        <Grid item xs={6}>
-          <Box sx={{ backgroundColor: '#2A2F38', p: 2, borderRadius: 1 }}>
-            <Typography variant="body2" sx={{ 
-              color: '#AAA',
-              fontWeight: 500,
-              mb: 1.5
-            }}>
-              Data Profiles
-            </Typography>
-            {drawerData.dataProfiles.length > 0 ? (
-              drawerData.dataProfiles.map((profile, index) => (
-                <Box key={index} sx={{ 
-                  backgroundColor: '#363D48',
-                  p: 1.5,
-                  borderRadius: '4px',
-                  mb: 1,
-                  border: '1px solid #444'
+        {/* Data Profiles Section */}
+        <Box>
+          <Typography variant="body2" sx={{ 
+            color: '#FFF',
+            fontWeight: 500,
+            mb: 1.5,
+            fontSize: '0.875rem'
+          }}>
+            Data Profiles
+          </Typography>
+          {drawerData.dataProfiles.length > 0 ? (
+            drawerData.dataProfiles.map((profile, index) => (
+              <Box key={index} sx={{ 
+                backgroundColor: '#262B36',
+                p: 1.5,
+                borderRadius: '4px',
+                mb: 1,
+                border: '1px solid #2BCBC155',
+                boxShadow: '0 0 8px #2BCBC122'
+              }}>
+                <Typography sx={{ 
+                  color: '#2BCBC1', 
+                  fontSize: '0.875rem',
+                  fontWeight: 500
                 }}>
-                  <Typography sx={{ 
-                    color: 'white', 
-                    fontSize: '0.875rem',
-                    fontWeight: 500
-                  }}>
-                    {profile}
-                  </Typography>
-                  <Typography sx={{ 
-                    color: '#2BCBC1', 
-                    fontSize: '0.75rem',
-                    mt: 0.5
-                  }}>
-                    DP {String(index + 1).padStart(6, '0')}
-                  </Typography>
-                </Box>
-              ))
-            ) : (
-              <Typography sx={{ color: '#666', fontStyle: 'italic', fontSize: '0.875rem' }}>
-                No data profiles configured
-              </Typography>
-            )}
-          </Box>
-        </Grid>
-      </Grid>
+                  {profile}
+                </Typography>
+              </Box>
+            ))
+          ) : (
+            <Typography sx={{ color: '#666', fontStyle: 'italic', fontSize: '0.875rem' }}>
+              No data profiles configured
+            </Typography>
+          )}
+        </Box>
+      </Box>
     </Box>
   </Box>
 )}
