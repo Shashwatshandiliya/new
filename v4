@@ -1,111 +1,96 @@
-{selectedTab === 0 && (
-  <Box>
-    <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-      <Button variant="outlined" startIcon={<DeleteIcon />} sx={{ 
-        color: 'white', 
-        borderColor: '#444',
-        fontSize: '0.75rem',
-        py: 0.5
-      }}>
-        Delete
-      </Button>
-      <Button variant="contained" startIcon={<EditIcon />} sx={{ fontSize: '0.75rem', py: 0.5 }}>
-        Edit
-      </Button>
-    </Box>
+// Update the interfaces
+interface Policy {
+  policy: {
+    policyId: number;
+    policyName: string;
+  };
+}
 
-    <Box sx={{ mt: 2 }}>
-      <Typography variant="body2" sx={{ color: '#AAA', mb: 1 }}>Description</Typography>
-      <Box sx={{ 
-        backgroundColor: '#2A2F38', 
-        p: 2, 
-        borderRadius: 1, 
-        color: 'white',
-        fontSize: '0.875rem'
-      }}>
-        {drawerData.description}
-      </Box>
-    </Box>
+interface Profile {
+  profile: {
+    profileId: number;
+    profileName: string;
+  };
+}
 
-    <Box sx={{ mt: 2 }}>
-      <Box sx={{ 
-        backgroundColor: '#1A2028', 
-        p: 2, 
-        borderRadius: 1,
-        border: '1px solid #2C3F5E'
-      }}>
-        {/* Policies Section */}
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="body2" sx={{ 
-            color: '#FFF',
-            fontWeight: 500,
-            mb: 1.5,
-            fontSize: '0.875rem'
+// Update the EntitlementRow interface
+interface EntitlementRow {
+  name: string;
+  ID: string;
+  description: string;
+  application: string;
+  isActive: boolean;
+  lastModified: string;
+  policies: Array<{id: number, name: string}>;
+  dataProfiles: Array<{id: number, name: string}>;
+}
+
+// Update the fetchEntitlements mapping
+const rows = resp.data.map(item => ({
+  name: item.entitlementName,
+  ID: item.entitlementId.toString(),
+  description: item.description,
+  application: item.application.appName,
+  isActive: item.isActive,
+  lastModified: new Date(item.lastUpdated).toLocaleDateString(),
+  policies: item.entitlementPolicyList.map(p => ({
+    id: p.policy.policyId,
+    name: p.policy.policyName
+  })),
+  dataProfiles: item.entitlementProfileList.map(p => ({
+    id: p.profile.profileId,
+    name: p.profile.profileName
+  }))
+}));
+
+// Update the Policies/Profiles display section
+{drawerData.policies.length > 0 ? (
+  drawerData.policies.map((policy, index) => (
+    <Box key={index} sx={{ 
+      backgroundColor: '#262B36',
+      p: 1.5,
+      borderRadius: '4px',
+      mb: 1,
+      border: '1px solid #2BCBC155',
+      boxShadow: '0 0 8px #2BCBC122'
+    }}>
+      <Grid container alignItems="center">
+        <Grid item xs={8}>
+          <Typography sx={{ 
+            color: '#2BCBC1', 
+            fontSize: '0.875rem',
+            fontWeight: 500
           }}>
-            Policies
+            {policy.name}
           </Typography>
-          {drawerData.policies.length > 0 ? (
-            drawerData.policies.map((policy, index) => (
-              <Box key={index} sx={{ 
-                backgroundColor: '#262B36',
-                p: 1.5,
-                borderRadius: '4px',
-                mb: 1,
-                border: '1px solid #2BCBC155',
-                boxShadow: '0 0 8px #2BCBC122'
-              }}>
-                <Typography sx={{ 
-                  color: '#2BCBC1', 
-                  fontSize: '0.875rem',
-                  fontWeight: 500
-                }}>
-                  {policy}
-                </Typography>
-              </Box>
-            ))
-          ) : (
-            <Typography sx={{ color: '#666', fontStyle: 'italic', fontSize: '0.875rem' }}>
-              No policies assigned
-            </Typography>
-          )}
-        </Box>
-
-        {/* Data Profiles Section */}
-        <Box>
-          <Typography variant="body2" sx={{ 
-            color: '#FFF',
-            fontWeight: 500,
-            mb: 1.5,
-            fontSize: '0.875rem'
+        </Grid>
+        <Grid item xs={4} sx={{ textAlign: 'right' }}>
+          <Typography sx={{ 
+            color: '#888', 
+            fontSize: '0.75rem',
           }}>
-            Data Profiles
+            POI {String(policy.id).padStart(6, '0')}
           </Typography>
-          {drawerData.dataProfiles.length > 0 ? (
-            drawerData.dataProfiles.map((profile, index) => (
-              <Box key={index} sx={{ 
-                backgroundColor: '#262B36',
-                p: 1.5,
-                borderRadius: '4px',
-                mb: 1,
-                border: '1px solid #2BCBC155',
-                boxShadow: '0 0 8px #2BCBC122'
-              }}>
-                <Typography sx={{ 
-                  color: '#2BCBC1', 
-                  fontSize: '0.875rem',
-                  fontWeight: 500
-                }}>
-                  {profile}
-                </Typography>
-              </Box>
-            ))
-          ) : (
-            <Typography sx={{ color: '#666', fontStyle: 'italic', fontSize: '0.875rem' }}>
-              No data profiles configured
-            </Typography>
-          )}
-        </Box>
-      </Box>
+        </Grid>
+      </Grid>
     </Box>
+  ))
+) : (...)}
+
+// Similarly update Data Profiles section
+{drawerData.dataProfiles.map((profile, index) => (
+  <Box key={index} sx={{...}}>
+    <Grid container alignItems="center">
+      <Grid item xs={8}>
+        <Typography sx={{...}}>
+          {profile.name}
+        </Typography>
+      </Grid>
+      <Grid item xs={4} sx={{ textAlign: 'right' }}>
+        <Typography sx={{...}}>
+          DPR {String(profile.id).padStart(6, '0')}
+        </Typography>
+      </Grid>
+    </Grid>
   </Box>
-)}
+))}
