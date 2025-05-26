@@ -1,96 +1,159 @@
-// Update the interfaces
-interface Policy {
-  policy: {
-    policyId: number;
-    policyName: string;
-  };
-}
+import * as React from 'react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import axios from 'axios';
+import EntitlementView from './EntitlementView';
+import '@testing-library/jest-dom';
 
-interface Profile {
-  profile: {
-    profileId: number;
-    profileName: string;
-  };
-}
+jest.mock('axios');
+const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-// Update the EntitlementRow interface
-interface EntitlementRow {
-  name: string;
-  ID: string;
-  description: string;
-  application: string;
-  isActive: boolean;
-  lastModified: string;
-  policies: Array<{id: number, name: string}>;
-  dataProfiles: Array<{id: number, name: string}>;
-}
+const mockEntitlements = [
+  {
+    entitlementId: 1,
+    entitlementName: 'Sales View',
+    description: 'Sales team access',
+    application: { appName: 'Sales App' },
+    isActive: true,
+    lastUpdated: '2024-05-15T08:26:00.265Z',
+    entitlementPolicyList: [
+      { policy: { policyId: 4, policyName: 'Sales Policy' } }
+    ],
+    entitlementProfileList: [
+      { profile: { profileId: 2, profileName: 'Regional Profile' } }
+    ]
+  }
+];
 
-// Update the fetchEntitlements mapping
-const rows = resp.data.map(item => ({
-  name: item.entitlementName,
-  ID: item.entitlementId.toString(),
-  description: item.description,
-  application: item.application.appName,
-  isActive: item.isActive,
-  lastModified: new Date(item.lastUpdated).toLocaleDateString(),
-  policies: item.entitlementPolicyList.map(p => ({
-    id: p.policy.policyId,
-    name: p.policy.policyName
-  })),
-  dataProfiles: item.entitlementProfileList.map(p => ({
-    id: p.profile.profileId,
-    name: p.profile.profileName
-  }))
-}));
+describe('EntitlementView', () => {
+  beforeEach(() => {
+    mockedAxios.get.mockResolvedValue({ data: mockEntitlements });
+  });
 
-// Update the Policies/Profiles display section
-{drawerData.policies.length > 0 ? (
-  drawerData.policies.map((policy, index) => (
-    <Box key={index} sx={{ 
-      backgroundColor: '#262B36',
-      p: 1.5,
-      borderRadius: '4px',
-      mb: 1,
-      border: '1px solid #2BCBC155',
-      boxShadow: '0 0 8px #2BCBC122'
-    }}>
-      <Grid container alignItems="center">
-        <Grid item xs={8}>
-          <Typography sx={{ 
-            color: '#2BCBC1', 
-            fontSize: '0.875rem',
-            fontWeight: 500
-          }}>
-            {policy.name}
-          </Typography>
-        </Grid>
-        <Grid item xs={4} sx={{ textAlign: 'right' }}>
-          <Typography sx={{ 
-            color: '#888', 
-            fontSize: '0.75rem',
-          }}>
-            POI {String(policy.id).padStart(6, '0')}
-          </Typography>
-        </Grid>
-      </Grid>
-    </Box>
-  ))
-) : (...)}
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
 
-// Similarly update Data Profiles section
-{drawerData.dataProfiles.map((profile, index) => (
-  <Box key={index} sx={{...}}>
-    <Grid container alignItems="center">
-      <Grid item xs={8}>
-        <Typography sx={{...}}>
-          {profile.name}
-        </Typography>
-      </Grid>
-      <Grid item xs={4} sx={{ textAlign: 'right' }}>
-        <Typography sx={{...}}>
-          DPR {String(profile.id).padStart(6, '0')}
-        </Typography>
-      </Grid>
-    </Grid>
-  </Box>
-))}
+  test('renders initial loading state', async () => {
+    render(<EntitlementView onNewEntitlement={jest.fn()} />);
+    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+  });
+
+  test('fetches and displays entitlements', async () => {
+    render(<EntitlementView onNewEntitlement={jest.fn()} />);
+    
+    await waitFor(() => {
+      expect(mockedAxios.get).toHaveBeenCalledWith(
+        'http://uklvauems02a.uk.standardchartered.com:32441/fmces/v1/allentitlements'
+      );
+    });
+
+    expect(await screen.findByText('Sales View')).toBeInTheDocument();
+    expect(screen.getByText('Sales App')).toBeInTheDocument();
+    expect(screen.getByText('Active')).toBeInTheDocument();
+  });
+
+  test('opens drawer with correct data when row clicked', async () => {
+    render(<EntitlementView onNewEntitlement={jest.fn()} />);
+    
+    await waitFor(() => screen.findByText('Sales View'));
+    fireEvent.click(screen.getByText('Sales View'));
+
+    expect(screen.getByText('ID: 1')).toBeInTheDocument();
+    expect(screen.getByText('Sales View')).toBeInTheDocument();
+  });
+
+  test('displays correct status styling', async () => {
+    render(<EntitlementView onNewEntitlement={jest.fn()} />);
+    
+    await waitFor(() => screen.findByText('Active'));
+    const status = screen.getByText('Active');
+    
+    expect(status).toHaveStyle('color: #2BCBC1');
+    expect(status).toHaveStyle('background-color: #2BCBC11A');
+  });
+
+  describe('Drawer Content', () => {
+    beforeEach(async () => {
+      render(<EntitlementView onNewEntitlement={jest.fn()} />);
+      await waitFor(() => screen.findByText('Sales View'));
+      fireEvent.click(screen.getByText('Sales View'));
+    });
+
+    test('displays Details tab content', () => {
+      expect(screen.getByText('Description')).toBeInTheDocument();
+      expect(screen.getByText('Sales team access')).toBeInTheDocument();
+      expect(screen.getByText('Sales Policy')).toBeInTheDocument();
+      expect(screen.getByText('Regional Profile')).toBeInTheDocument();
+      expect(screen.getByText('POI 000004')).toBeInTheDocument();
+      expect(screen.getByText('DPR 000002')).toBeInTheDocument();
+    });
+
+    test('switches to Features & Actions tab', () => {
+      fireEvent.click(screen.getByText('Features & Actions'));
+      expect(screen.getByText('testfeature1')).toBeInTheDocument();
+      expect(screen.getByText('testaction2')).toBeInTheDocument();
+    });
+
+    test('switches to History tab', () => {
+      fireEvent.click(screen.getByText('History'));
+      expect(screen.getByText('Modified')).toBeInTheDocument();
+      expect(screen.getByText('Approved')).toBeInTheDocument();
+    });
+
+    test('handles delete button click', () => {
+      const deleteButton = screen.getByText('Delete');
+      fireEvent.click(deleteButton);
+      // Add your delete logic assertions here
+    });
+
+    test('handles edit button click', () => {
+      const editButton = screen.getByText('Edit');
+      fireEvent.click(editButton);
+      // Add your edit logic assertions here
+    });
+  });
+
+  test('handles empty states', async () => {
+    mockedAxios.get.mockResolvedValue({ data: [] });
+    
+    render(<EntitlementView onNewEntitlement={jest.fn()} />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('No records found')).toBeInTheDocument();
+    });
+  });
+
+  test('handles API errors', async () => {
+    mockedAxios.get.mockRejectedValue(new Error('API Error'));
+    
+    render(<EntitlementView onNewEntitlement={jest.fn()} />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('Error fetching entitlements')).toBeInTheDocument();
+    });
+  });
+
+  test('interacts with date filter', async () => {
+    render(<EntitlementView onNewEntitlement={jest.fn()} />);
+    
+    const dateInput = screen.getByLabelText('Start Date → End Date');
+    fireEvent.change(dateInput, { target: { value: '2024-05-01' } });
+    
+    const searchButton = screen.getByText('Search');
+    fireEvent.click(searchButton);
+  });
+
+  test('closes drawer', async () => {
+    render(<EntitlementView onNewEntitlement={jest.fn()} />);
+    
+    await waitFor(() => screen.findByText('Sales View'));
+    fireEvent.click(screen.getByText('Sales View'));
+    
+    const drawer = screen.getByRole('presentation');
+    fireEvent.keyDown(drawer, { key: 'Escape' });
+    
+    await waitFor(() => {
+      expect(drawer).not.toBeInTheDocument();
+    });
+  });
+});
