@@ -1,4 +1,3 @@
-// Replace the entire selectedTab === 1 block with:
 {selectedTab === 1 && (
   <Box sx={{ mt: 2 }}>
     <Box sx={{ 
