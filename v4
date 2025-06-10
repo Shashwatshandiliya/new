@@ -1,42 +1,79 @@
-{selectedTab === 1 && (
-  <Box sx={{ mt: 2 }}>
-    <Box sx={{ 
-      backgroundColor: '#FFFFFF0D', 
-      borderRadius: 1,
-      overflow: 'hidden'
-    }}>
-      <Box sx={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 2fr',
-        borderBottom: '1px solid #2C3F5E',
-        backgroundColor: '#262B36',
-        px: 2,
-        py: 1
-      }}>
-        <Typography variant="subtitle2" sx={{ color: '#2BCBC1' }}>Feature</Typography>
-        <Typography variant="subtitle2" sx={{ color: '#2BCBC1' }}>Action</Typography>
-      </Box>
-
-      {drawerData.featureActions.map((fa, index) => (
-        <Box 
-          key={index}
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 2fr',
-            borderBottom: index < drawerData.featureActions.length - 1 ? 
-              '1px solid #2C3F5E' : 'none',
-            px: 2,
-            py: 1.5
-          }}
-        >
-          <Typography sx={{ color: 'white', fontWeight: 500 }}>
-            {fa.feature}
-          </Typography>
-          <Typography sx={{ color: 'white' }}>
-            {fa.action}
-          </Typography>
-        </Box>
-      ))}
-    </Box>
-  </Box>
-)}
+High-Impact Hackathon Ideas – Financial Markets (Standard Chartered)
+AI-Powered FX/Market Intelligence & Summaries
+Build a client‑facing platform that ingests the bank’s market research (e.g. Daily Market Navigator) and external news, then uses LLM/NLP to auto‑summarize and generate on‑demand content (video or text) for clients. For example, Standard Chartered’s new “FX Intelligent Expert” uses AI to turn FX commentaries into one‑minute videos
+sc.com
+sc.com
+. A hackathon project could prototype a similar AI pipeline that produces bite‑sized market updates (with charts, voiceovers and translations) for clients. This addresses the pain point of information overload: many institutional clients struggle to digest fast‑moving markets. By automating summarization and visualization, traders and clients get critical insights faster (improving decision speed) and analysts’ workloads are reduced.
+Benefits: Improves client engagement and satisfaction with interactive, on‑demand content; saves analysts’ time by auto‑generating summaries; and differentiates SCB in digital advisory (SC cites faster time‑to‑market and cost efficiency as goals
+sc.com
+).
+Blockchain-Based Asset Tokenization & Settlement
+Create a private‑blockchain proof‑of‑concept to tokenize tradable assets (e.g. bonds or credit instruments) and streamline post‑trade settlement. Inspired by Goldman Sachs’ Digital Asset Platform (GS DAP), which issued a tokenized bond in Hong Kong, this idea would develop a mini‑platform where securities are represented as tokens on a permissioned ledger
+blockworks.co
+. Clients or internal desks could trade these tokens, with smart contracts automating settlement and collateral flows. This tackles the legacy pain point of slow settlement and fragmented custody (e.g. multiple CSDs in emerging markets
+sc.com
+sc.com
+). A hackathon team could demo end‑to‑end asset issuance, partial redemption, and on‑chain audit trails. The result is more transparency and 24/7 liquidity: investors “see more data, more transparency, more accurate pricing” on assets thanks to the blockchain
+blockworks.co
+.
+Benefits: Reduces settlement time and counterparty risk (potentially from days to hours); enables fractional trading/liquidity of large assets; lowers operational costs by automating reconciliation; and positions SCB as a leader in digital assets (unlocking new revenue from asset servicing).
+Programmable Multi-Currency Payments (Blockchain/Smart Contracts)
+Develop a real‑time cross‑border payments platform for corporate clients using blockchain-based tokenized money. This is inspired by JPMorgan’s Onyx and JPM Coin initiatives: programmable payments which allow instant multicurrency FX settlement and even automatic execution of conditional payments
+theasianbanker.com
+. A hackathon prototype could let a Treasury user send/receive funds via a distributed ledger, with dynamic FX conversion and pre‑funding managed by smart contracts. As JPMorgan notes, such solutions advance global settlement and transform liquidity management for corporates
+theasianbanker.com
+. For SCB clients (e.g. multinationals in Asia or Africa), this addresses the pain point of slow, expensive correspondent banking. By tokenizing e.g. USD, EUR, USD on chain, payments between SC accounts become nearly instant and audit‑ready.
+Benefits: Enables same‑day or instant settlement of multi‑currency transactions, reducing fees and FX slippage; improves cash‑flow visibility/liquidity for clients; cuts internal FX processing overhead; and provides a cutting‑edge service (JPMorgan cites programmable payments as boosting fraud detection and corporate liquidity management
+theasianbanker.com
+).
+AI/ML-Enhanced Compliance & Fraud Detection Automation
+Build internal tools that use machine learning and RPA to automate trade/transaction monitoring and compliance reporting. For example, SCB could use AI models to scan live trades and transaction data for sanction‑hits or AML red flags
+sc.com
+. Similarly, RPA bots could gather trade data from systems and auto-populate regulatory filings or risk reports, mimicking manual entry
+akitra.com
+. This addresses the major pain point of high manual overhead in trade compliance. Citi’s experience shows this can be transformative: Citi processes ~9 million trade transactions per year and uses AI scoring to “detect transactions with potential compliance concerns up front”
+citigroup.com
+citigroup.com
+. A hackathon solution might include an AI model trained on past alerts to score new trades, plus a bot that compiles exception reports. By catching issues earlier (and reducing false positives via analytics) and by automating report workflows, the bank cuts back-office costs and regulatory risk.
+Benefits: Speeds up fraud/sanctions screening (AI algorithms can flag patterns humans miss), lowers compliance costs, reduces fines by ensuring faster, consistent decisioning
+sc.com
+, and frees analysts from tedious checks so they can focus on exceptions.
+LLM-Powered Trading Desk Assistant (Internal)
+Create an internal AI assistant (chatbot or interactive tool) for sales/traders that synthesizes research, news, and internal data. Drawing on successes like JPMorgan’s LLM Suite, which helps analysts draft memos and summarize documents
+gsdcouncil.org
+, this project would integrate an LLM with SCB’s market data and research databases. For example, a trader could ask “What are key USD/JPY drivers this week?” or “Summarize client exposure to rate hikes,” and the tool would generate a concise briefing. This directly targets the pain point of information overload and manual report-writing. Standard Chartered’s own launch of “SC GPT” enterprise AI (for 70,000 employees) underscores this trend
+sc.com
+. A hackathon team could hook an LLM to a news API plus internal economic reports and demo question-answering or memo drafting.
+Benefits: Improves analyst productivity and consistency (automating mundane parts of research
+gsdcouncil.org
+), speeds client service, and leverages best-of-breed AI. By freeing up human experts for strategy, the bank gains efficiency and a competitive edge in advisory.
+Automated Trade Documentation Generator
+Use generative AI to create and verify trade documents (e.g. confirmations, contracts, letters of credit). In trade finance and capital markets, many documents are templated and repetitive – AI can both draft these from deal data and check them against source data for errors. For instance, SC notes that GenAI “automating the generation of crucial trade documents and subsequently verify their authenticity, thereby reducing errors and ensuring compliance” can speed transactions
+sc.com
+. A hackathon prototype might parse a trade ticket (counterparty, amounts, dates) and produce a formatted PDF confirmation, then flag any fields that deviate from standard rules. This alleviates the common pain point of manual paperwork (which causes delays and mistakes in high-volume FX or derivatives trades).
+Benefits: Speeds up trade processing (more straight-through processing), cuts manual proofreading time, and reduces costly errors. Clients get quicker confirmations, and SCB reduces operational risk and audit workload.
+Intelligent Client Treasury/Liquidity Advisor (LLM)
+Design a client-facing tool (e.g. a chatbot or dashboard) that helps corporate treasury clients manage cash and FX risk. Leveraging LLMs and simulation, the app could take a company’s projected cash flows or profit figures and suggest optimal hedging strategies. This follows SC’s vision: “generative AI use cases offer corporate clients a more proactive approach to liquidity and FX management by simulating cash flow scenarios and suggesting optimal hedging strategies”
+sc.com
+. For example, a client could input expected import/export flows, and the AI would output a USD/SGD hedging schedule or recommend interest-rate swaps. This idea addresses the pain point of reactive risk management – many corporates only hedge after volatility hits. A hackathon team could build a proof-of-concept combining an LLM (for conversational input) with a simple cash-flow model.
+Benefits: Empowers clients with smarter forecasts and product recommendations, potentially increasing fee revenue on hedging products. Improves client experience by acting as a digital advisor and deepens relationship (clients get proactive FX advice).
+Cloud-Native Microservices Analytics Portal (Client/Developer API)
+Develop a cloud-based market data and analytics portal (a mini “Marquee”) for clients and internal use. Following Goldman Sachs’ Marquee model
+goldmansachs.com
+, this would expose curated market insights and tools via APIs or a web UI. For example, a hackathon might launch microservices that provide live bond yields, volatility surfaces or risk metrics, which can be queried on demand. By using containerized microservices (e.g. on AWS/GCP), new analytics modules can be spun up quickly. This addresses the pain point of rigid legacy systems: trading clients today expect programmatic access to data and self-service tools. A cloud-native platform also helps SCB break monoliths – new features can be developed in parallel and deployed with minimal risk.
+Benefits: Accelerates product development (new analytics rolled out faster); enhances client stickiness by letting clients integrate SCB’s data into their own systems; and can create new revenue streams (e.g. subscription to data/services). It modernizes SCB’s architecture, making the bank more agile in launching innovative financial products.
+RPA-Driven Trade Reconciliation & Workflow Automation (Internal)
+Implement Robotic Process Automation for routine post-trade operations. Examples include matching trade tickets with confirmations, reconciling position reports across systems, or auto-escalating settlement breaks. RPA bots can interface with existing systems (FIX engines, SWIFT, databases) to “mimic” manual tasks. In finance, RPA is proven to handle high-volume tasks: it can scan thousands of transactions for reconciliation and flag exceptions much faster than humans
+akitra.com
+. A hackathon project could automate a common workflow (e.g. confirming FX trades across two systems) and generate reports. This directly saves time for middle/back-office teams burdened by manual matching, and complements the AI tools by ensuring data quality.
+Benefits: Reduces errors and headcount needs in operations; shortens cycle times for trade settlement; and improves employee satisfaction by removing tedious tasks. Faster reconciliations mean capital can be released sooner (improving P&L), and the bank can redeploy staff to higher-value work.
+Sources: These ideas draw on industry precedents and SCB initiatives. For instance, Goldman Sachs’ private-chain “Digital Asset Platform” shows tokenization benefits
+blockworks.co
+; JPMorgan’s Onyx platform illustrates programmable payments and liquidity tools
+theasianbanker.com
+; Citi and SC have demonstrated AI for compliance and document processing
+sc.com
+citigroup.com
+; and SC’s own GenAI pilots underline opportunities in trade docs and liquidity advisory
+sc.com
+. Each concept is scoped for proof-of-concept builds (hackathon), yet aligned with SCB’s strategic goals of cutting costs, boosting revenue, and enhancing client experience.
