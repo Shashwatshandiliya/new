@@ -35,27 +35,6 @@
         </Box>
       </Box>
 
-      {/* Tabs */}
-      <Box sx={{ borderBottom: "1px solid #444", mb: 2 }}>
-        <Grid container spacing={2}>
-          <Grid item>
-            <Typography variant="body2" sx={{ color: "#00BFFF", fontWeight: 500 }}>
-              Details
-            </Typography>
-          </Grid>
-          <Grid item>
-            <Typography variant="body2" sx={{ color: "#8D8D8D", cursor: "not-allowed" }}>
-              Features & Actions
-            </Typography>
-          </Grid>
-          <Grid item>
-            <Typography variant="body2" sx={{ color: "#8D8D8D", cursor: "not-allowed" }}>
-              History
-            </Typography>
-          </Grid>
-        </Grid>
-      </Box>
-
       {/* Description */}
       {"description" in drawerData && (
         <Box sx={{ mb: 2 }}>
@@ -68,7 +47,35 @@
         </Box>
       )}
 
-      {/* Data Policies (Placeholder) */}
+      {/* Dummy Additional Info (Roles, Account Type, etc.) */}
+      {"roles" in drawerData && (
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="subtitle2" sx={{ color: "#CBCBCB" }}>
+            Roles
+          </Typography>
+          <Typography sx={{ color: "white" }}>{drawerData.roles}</Typography>
+        </Box>
+      )}
+
+      {"accountType" in drawerData && (
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="subtitle2" sx={{ color: "#CBCBCB" }}>
+            Account Type
+          </Typography>
+          <Typography sx={{ color: "white" }}>{drawerData.accountType}</Typography>
+        </Box>
+      )}
+
+      {"created" in drawerData && (
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="subtitle2" sx={{ color: "#CBCBCB" }}>
+            Created Date
+          </Typography>
+          <Typography sx={{ color: "white" }}>{drawerData.created}</Typography>
+        </Box>
+      )}
+
+      {/* Data Policies (placeholder) */}
       <Box sx={{ mb: 2 }}>
         <Typography variant="subtitle2" sx={{ color: "#CBCBCB" }}>
           Data Policies
@@ -78,7 +85,7 @@
         </Typography>
       </Box>
 
-      {/* Data Profiles (Placeholder) */}
+      {/* Data Profiles (placeholder) */}
       <Box sx={{ mb: 2 }}>
         <Typography variant="subtitle2" sx={{ color: "#CBCBCB" }}>
           Data Profiles
@@ -88,7 +95,7 @@
         </Typography>
       </Box>
 
-      {/* Action buttons */}
+      {/* Actions */}
       <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end", gap: 2 }}>
         <Button
           variant="outlined"
