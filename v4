@@ -1,219 +1,24 @@
-// src/components/EntitlementUserView/EntitlementUserView.tsx
-import * as React from "react";
-import Grid from "@mui/material/Grid";
-import IconButton from "@mui/material/IconButton";
-import Button from "@mui/material/Button";
-import Box from "@mui/material/Box";
-import MaterialTable from "../../../Root/components/MaterialTable";
-import { InputAdornment, TextField, Typography } from "@mui/material";
-import AddCircleIcon from "@mui/icons-material/AddCircle";
-import SearchIcon from "@mui/icons-material/Search";
-import { Tabs } from "antd";
-import Drawer from "@mui/material/Drawer";
-import styles from "./EntitlementUserView.module.css";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-
-const { TabPane } = Tabs;
-
-interface AccountRow {
-  id: number;
-  name: string;
-  status: string;
-  created: string;
+/* src/components/EntitlementUserView/EntitlementUserView.module.css */
+.container {
+  padding: 16px;
 }
-interface EntitlementRow {
-  id: number;
-  name: string;
-  type: string;
-  created: string;
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
 }
-
-export default function EntitlementUserView() {
-  const [activeTab, setActiveTab] = React.useState<"1" | "2">("1");
-  const [drawerOpen, setDrawerOpen] = React.useState(false);
-  const [drawerData, setDrawerData] = React.useState<AccountRow | EntitlementRow | null>(null);
-  const [searchTerm, setSearchTerm] = React.useState("");
-
-  // TODO: replace with real API calls
-  const accounts: AccountRow[] = [
-    { id: 1, name: "Acme Corp", status: "Active", created: "2023-01-15" },
-    { id: 2, name: "Beta Industries", status: "Inactive", created: "2023-03-22" },
-  ];
-  const entitlements: EntitlementRow[] = [
-    { id: 1, name: "Admin", type: "Role", created: "2022-11-05" },
-    { id: 2, name: "Analytics", type: "Permission", created: "2023-02-14" },
-  ];
-
-  const filteredAccounts = accounts.filter(a =>
-    a.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  const filteredEntitlements = entitlements.filter(e =>
-    e.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const openDrawer = (row: AccountRow | EntitlementRow) => {
-    setDrawerData(row);
-    setDrawerOpen(true);
-  };
-
-  const handleTabChange = (key: string) => {
-    setActiveTab(key as "1" | "2");
-    setSearchTerm("");
-    setDrawerOpen(false);
-  };
-
-  const headCellsAccounts = [
-    { accessorKey: "id", header: "ID" },
-    { accessorKey: "name", header: "Name" },
-    { accessorKey: "status", header: "Status" },
-    { accessorKey: "created", header: "Created" },
-  ];
-  const headCellsEntitlements = [
-    { accessorKey: "id", header: "ID" },
-    { accessorKey: "name", header: "Name" },
-    { accessorKey: "type", header: "Type" },
-    { accessorKey: "created", header: "Created" },
-  ];
-
-  return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <Typography
-          fontFamily="Poppins"
-          sx={{ fontWeight: 500, fontSize: 20, color: "white" }}
-        >
-          Entitlement Users
-        </Typography>
-        <Tabs
-          activeKey={activeTab}
-          onChange={handleTabChange}
-          className={styles.tabs}
-        >
-          <TabPane
-            tab={
-              <span style={{ fontWeight: 600, color: activeTab === "1" ? "#007BFF" : "#8D8D8D" }}>
-                Accounts
-              </span>
-            }
-            key="1"
-          />
-          <TabPane
-            tab={
-              <span style={{ fontWeight: 600, color: activeTab === "2" ? "#007BFF" : "#8D8D8D" }}>
-                Entitlements
-              </span>
-            }
-            key="2"
-          />
-        </Tabs>
-      </div>
-
-      <div className={styles.filterSection}>
-        <Grid container alignItems="center" spacing={2}>
-          <Grid item xs={8} md={6}>
-            <TextField
-              placeholder={activeTab === "1" ? "Get accounts by name" : "Get entitlements by name"}
-              size="small"
-              fullWidth
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <IconButton size="small">
-                      <SearchIcon sx={{ color: "#CBCBCB" }} />
-                    </IconButton>
-                  </InputAdornment>
-                ),
-                sx: {
-                  backgroundColor: "#1E252D",
-                  color: "white",
-                  borderRadius: 1,
-                },
-              }}
-            />
-          </Grid>
-          <Grid item xs={4} md={6} textAlign="right">
-            <Button
-              variant="contained"
-              startIcon={<AddCircleIcon />}
-              onClick={() => {
-                /* navigate to create screen */
-              }}
-              sx={{
-                height: 36,
-                fontWeight: 600,
-                fontSize: 12,
-              }}
-            >
-              {activeTab === "1" ? "Create Account" : "Create Entitlement"}
-            </Button>
-          </Grid>
-        </Grid>
-      </div>
-
-      <div className={styles.tableSection}>
-        <Box sx={{ border: "1px solid #444", p: 2, borderRadius: 1, backgroundColor: "#1A2028" }}>
-          <MaterialTable
-            tableRows={activeTab === "1" ? filteredAccounts : filteredEntitlements}
-            tableCols={activeTab === "1" ? headCellsAccounts : headCellsEntitlements}
-            totalRowCount={(activeTab === "1" ? filteredAccounts : filteredEntitlements).length}
-            globalSearch={false}
-            onRowClick={(row) => openDrawer(row as any)}
-          />
-
-          <Drawer
-            anchor="right"
-            open={drawerOpen}
-            onClose={() => setDrawerOpen(false)}
-            sx={{ "& .MuiDrawer-paper": { width: 500, backgroundColor: "#1A2028", p: 2 } }}
-          >
-            {drawerData ? (
-              <>
-                <div className={styles.drawerHeader}>
-                  <Typography variant="h6" sx={{ color: "white" }}>
-                    {activeTab === "1"
-                      ? (drawerData as AccountRow).name
-                      : (drawerData as EntitlementRow).name}
-                  </Typography>
-                  <IconButton onClick={() => setDrawerOpen(false)} sx={{ color: "white" }}>
-                    <DeleteIcon />
-                  </IconButton>
-                </div>
-                <Grid container spacing={1} sx={{ mt: 1 }}>
-                  {Object.entries(drawerData).map(([key, val]) => (
-                    <Grid
-                      key={key}
-                      item
-                      xs={drawerData && typeof val === "string" ? 12 : 6}
-                      sx={{ backgroundColor: "#FFFFFF0D", p: 1 }}
-                    >
-                      <Typography variant="body2" sx={{ color: "white" }}>
-                        {`${key.charAt(0).toUpperCase() + key.slice(1)}: ${val}`}
-                      </Typography>
-                    </Grid>
-                  ))}
-                </Grid>
-                <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end", gap: 2 }}>
-                  <Button
-                    variant="outlined"
-                    startIcon={<DeleteIcon />}
-                    sx={{ color: "white", borderColor: "white" }}
-                  >
-                    Delete
-                  </Button>
-                  <Button variant="contained" startIcon={<EditIcon />}>
-                    Edit
-                  </Button>
-                </Box>
-              </>
-            ) : (
-              <Typography sx={{ color: "white" }}>No record selected</Typography>
-            )}
-          </Drawer>
-        </Box>
-      </div>
-    </div>
-  );
+.tabs {
+  background: transparent;
+}
+.filterSection {
+  margin-bottom: 16px;
+}
+.tableSection {
+  margin-top: 8px;
+}
+.drawerHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
