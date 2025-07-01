@@ -18,14 +18,17 @@ const { TabPane } = Tabs;
 
 interface AccountRow {
   id: number;
-  name: string;
+  bankId: string;
+  accountOwner: string;
+  roles: string[];
   status: string;
-  created: string;
+  accountType: string;
+  createdDate: string;
 }
 interface EntitlementRow {
   id: number;
   name: string;
-  type: string;
+  description: string;
   created: string;
 }
 
@@ -39,18 +42,24 @@ export default function EntitlementUserView({ onNavigate }: EntitlementUserViewP
   const [drawerData, setDrawerData] = React.useState<AccountRow | EntitlementRow | null>(null);
   const [searchTerm, setSearchTerm] = React.useState("");
 
-  // Mock data (replace with real APIs)
+  // Updated dummy data
   const accounts: AccountRow[] = [
-    { id: 1, name: "Acme Corp", status: "Active", created: "2023-01-15" },
-    { id: 2, name: "Beta Industries", status: "Inactive", created: "2023-03-22" },
+    { id: 1, bankId: '111111', accountOwner: '2222222', roles: ['maker','checker'], status: 'Active', accountType: 'User', createdDate: '2025-06-01' },
+    { id: 2, bankId: '333333', accountOwner: '4444444', roles: ['maker'], status: 'Inactive', accountType: 'Admin', createdDate: '2025-05-15' },
+    { id: 3, bankId: '555555', accountOwner: '6666666', roles: ['checker'], status: 'Active', accountType: 'User', createdDate: '2025-04-10' },
+    { id: 4, bankId: '777777', accountOwner: '8888888', roles: ['maker','checker'], status: 'Active', accountType: 'User', createdDate: '2025-03-05' },
+    { id: 5, bankId: '999999', accountOwner: '0000000', roles: ['checker'], status: 'Inactive', accountType: 'Manager', createdDate: '2025-02-20' },
   ];
   const entitlements: EntitlementRow[] = [
-    { id: 1, name: "Admin", type: "Role", created: "2022-11-05" },
-    { id: 2, name: "Analytics", type: "Permission", created: "2023-02-14" },
+    { id: 1, name: 'Admin', description: 'Full access', created: '2025-01-01' },
+    { id: 2, name: 'Maker', description: 'Can create records', created: '2025-01-05' },
+    { id: 3, name: 'Checker', description: 'Can verify records', created: '2025-01-10' },
+    { id: 4, name: 'Viewer', description: 'Read only', created: '2025-01-15' },
+    { id: 5, name: 'Approver', description: 'Approves transactions', created: '2025-01-20' },
   ];
 
   const filteredAccounts = accounts.filter(a =>
-    a.name.toLowerCase().includes(searchTerm.toLowerCase())
+    a.bankId.includes(searchTerm) || a.accountOwner.includes(searchTerm)
   );
   const filteredEntitlements = entitlements.filter(e =>
     e.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -68,53 +77,37 @@ export default function EntitlementUserView({ onNavigate }: EntitlementUserViewP
   };
 
   const headCellsAccounts = [
-    { accessorKey: "id", header: "ID" },
-    { accessorKey: "name", header: "Name" },
-    { accessorKey: "status", header: "Status" },
-    { accessorKey: "created", header: "Created" },
+    { accessorKey: 'id', header: 'ID' },
+    { accessorKey: 'bankId', header: 'Bank ID' },
+    { accessorKey: 'accountOwner', header: 'Account Owner' },
+    { accessorKey: 'roles', header: 'Roles' },
+    { accessorKey: 'status', header: 'Status' },
+    { accessorKey: 'accountType', header: 'Account Type' },
+    { accessorKey: 'createdDate', header: 'Created Date' },
   ];
   const headCellsEntitlements = [
-    { accessorKey: "id", header: "ID" },
-    { accessorKey: "name", header: "Name" },
-    { accessorKey: "type", header: "Type" },
-    { accessorKey: "created", header: "Created" },
+    { accessorKey: 'id', header: 'ID' },
+    { accessorKey: 'name', header: 'Name' },
+    { accessorKey: 'description', header: 'Description' },
+    { accessorKey: 'created', header: 'Created' },
   ];
 
   return (
     <div className={styles.container}>
-      {/* Heading */}
       <Typography
         fontFamily="Poppins"
-        sx={{ fontWeight: 500, fontSize: 20, color: "white", marginBottom: 2 }}
-      >
-        Entitlement Users
-      </Typography>
+        sx={{ fontWeight: 500, fontSize: 20, color: "white", mb: 2 }}
+      >Entitlement Users</Typography>
 
-      {/* Tabs under heading */}
       <Tabs
         activeKey={activeTab}
         onChange={handleTabChange}
         className={styles.tabs}
       >
-        <TabPane
-          tab={
-            <span style={{ fontWeight: 600, color: activeTab === "1" ? "#007BFF" : "#8D8D8D" }}>
-              Accounts
-            </span>
-          }
-          key="1"
-        />
-        <TabPane
-          tab={
-            <span style={{ fontWeight: 600, color: activeTab === "2" ? "#007BFF" : "#8D8D8D" }}>
-              Entitlements
-            </span>
-          }
-          key="2"
-        />
+        <TabPane tab={<span>Accounts</span>} key="1" />
+        <TabPane tab={<span>Entitlements</span>} key="2" />
       </Tabs>
 
-      {/* Search bar + buttons */}
       <div className={styles.filterSection}>
         <Grid container alignItems="center" spacing={2}>
           <Grid item xs={12} md={4} lg={3}>
@@ -124,6 +117,9 @@ export default function EntitlementUserView({ onNavigate }: EntitlementUserViewP
               fullWidth
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
+              sx={{
+                '& .MuiInputBase-root': { height: 40 } // make search bar taller
+              }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -138,98 +134,71 @@ export default function EntitlementUserView({ onNavigate }: EntitlementUserViewP
               }}
             />
           </Grid>
-
-          {/* Search button */}
-          <Grid item xs={6} md={2} lg={1}>
+          <Grid item xs={3} md={2} lg={1}>
             <Button
               variant="outlined"
               size="small"
-              onClick={() => {/* trigger search API */}}
+              onClick={() => { /* search */ }}
               sx={{
                 color: "white",
                 borderColor: "white",
-                height: 36,
-                width: "100%",
+                height: 40,
+                width: '100%',
               }}
-            >
-              Search
-            </Button>
+            >Search</Button>
           </Grid>
-
-          {/* Create button */}
-          <Grid item xs={6} md={6} lg={8} textAlign="right">
+          <Grid item xs={9} md={6} lg={8} textAlign="right">
             <Button
               variant="contained"
               startIcon={<AddCircleIcon />}
-              onClick={() => {
-                if (onNavigate) onNavigate(activeTab === "1" ? "create-account" : "create-entitlement");
-              }}
-              sx={{
-                height: 36,
-                fontWeight: 600,
-                fontSize: 12,
-              }}
-            >
-              {activeTab === "1" ? "Create Account" : "Create Entitlement"}
-            </Button>
+              onClick={() => onNavigate && onNavigate(activeTab === "1" ? "create-account" : "create-entitlement")}
+              sx={{ height: 40, fontWeight: 600, fontSize: 12 }}
+            >{activeTab === "1" ? "Create Account" : "Create Entitlement"}</Button>
           </Grid>
         </Grid>
       </div>
 
-      {/* Table section */}
       <div className={styles.tableSection}>
-        <Box sx={{ border: "1px solid #444", p: 2, borderRadius: 1, backgroundColor: "#1A2028" }}>
+        <Box sx={{ border: '1px solid #444', p: 2, borderRadius: 1, backgroundColor: '#1A2028' }}>
           <MaterialTable
             tableRows={activeTab === "1" ? filteredAccounts : filteredEntitlements}
             tableCols={activeTab === "1" ? headCellsAccounts : headCellsEntitlements}
             totalRowCount={(activeTab === "1" ? filteredAccounts : filteredEntitlements).length}
             globalSearch={false}
-            onRowClick={(row) => openDrawer(row as any)}
+            onRowClick={row => openDrawer(row as any)}
           />
-
           <Drawer
             anchor="right"
             open={drawerOpen}
             onClose={() => setDrawerOpen(false)}
-            sx={{ "& .MuiDrawer-paper": { width: 500, backgroundColor: "#1A2028", p: 2 } }}
+            sx={{ '& .MuiDrawer-paper': { width: 500, backgroundColor: '#1A2028', p: 2 } }}
           >
             {drawerData ? (
               <>
                 <div className={styles.drawerHeader}>
-                  <Typography variant="h6" sx={{ color: "white" }}>
-                    {drawerData.name}
+                  <Typography variant="h6" sx={{ color: 'white' }}>
+                    {'name' in drawerData ? drawerData.name : drawerData.bankId}
                   </Typography>
-                  <IconButton onClick={() => setDrawerOpen(false)} sx={{ color: "white" }}>
+                  <IconButton onClick={() => setDrawerOpen(false)} sx={{ color: 'white' }}>
                     <DeleteIcon />
                   </IconButton>
                 </div>
                 <Grid container spacing={1} sx={{ mt: 1 }}>
-                  {Object.entries(drawerData).map(([key, val]) => (
-                    <Grid
-                      key={key}
-                      item
-                      xs={12}
-                      sx={{ backgroundColor: "#FFFFFF0D", p: 1 }}
-                    >
-                      <Typography variant="body2" sx={{ color: "white" }}>
-                        {`${key.charAt(0).toUpperCase() + key.slice(1)}: ${val}`}
+                  {Object.entries(drawerData).map(([k, v]) => (
+                    <Grid key={k} item xs={12} sx={{ backgroundColor: '#FFFFFF0D', p: 1 }}>
+                      <Typography variant="body2" sx={{ color: 'white' }}>
+                        {`${k.charAt(0).toUpperCase() + k.slice(1)}: ${Array.isArray(v) ? v.join(', ') : v}`}
                       </Typography>
                     </Grid>
                   ))}
                 </Grid>
-                <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end", gap: 2 }}>
-                  <Button
-                    variant="outlined"
-                    startIcon={<DeleteIcon />}
-                    sx={{ color: "white", borderColor: "white" }}
-                  >
-                    Delete
-                  </Button>
+                <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                  <Button variant="outlined" startIcon={<DeleteIcon />} sx={{ color: 'white', borderColor: 'white' }}>Delete</Button>
                   <Button variant="contained" startIcon={<EditIcon />}>Edit</Button>
                 </Box>
               </>
             ) : (
-              <Typography sx={{ color: "white" }}>No record selected</Typography>
+              <Typography sx={{ color: 'white' }}>No record selected</Typography>
             )}
           </Drawer>
         </Box>
