@@ -2,31 +2,56 @@
   anchor="right"
   open={drawerOpen}
   onClose={() => setDrawerOpen(false)}
-  sx={{ "& .MuiDrawer-paper": { width: 400, backgroundColor: "#1A2028", p: 2 } }}
+  sx={{
+    "& .MuiDrawer-paper": {
+      width: 420,
+      backgroundColor: "#1A2028",
+      padding: "24px",
+      borderLeft: "1px solid #2F3A45",
+    },
+  }}
 >
   {drawerData ? (
-    <>
-      {/* Header with Name + ID + Status */}
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="h6" sx={{ color: "white", fontWeight: 600 }}>
-          {"name" in drawerData ? drawerData.name : drawerData.accountOwner}
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      {/* Header */}
+      <Box sx={{ mb: 3 }}>
+        <Typography
+          variant="h6"
+          sx={{ color: "#fff", fontWeight: 600, fontSize: "20px", mb: 1 }}
+        >
+          {"name" in drawerData
+            ? drawerData.name
+            : drawerData.accountOwner}
         </Typography>
-        <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
+
+        <Box sx={{ display: "flex", gap: 1 }}>
           <Typography
             variant="body2"
-            sx={{ color: "#ccc", backgroundColor: "#333", px: 1.5, py: 0.5, borderRadius: 1 }}
+            sx={{
+              color: "#ccc",
+              backgroundColor: "#2C3138",
+              px: 1.5,
+              py: 0.5,
+              borderRadius: 1,
+              fontSize: 12,
+            }}
           >
             ID: {drawerData.id}
           </Typography>
+
           {"status" in drawerData && (
             <Typography
               variant="body2"
               sx={{
-                backgroundColor: drawerData.status === "Active" ? "#4caf50" : "#f44336",
+                backgroundColor:
+                  drawerData.status === "Active"
+                    ? "#388e3c"
+                    : "#d32f2f",
                 px: 1.5,
                 py: 0.5,
                 borderRadius: 1,
                 color: "white",
+                fontSize: 12,
               }}
             >
               {drawerData.status}
@@ -35,80 +60,107 @@
         </Box>
       </Box>
 
-      {/* Description */}
-      {"description" in drawerData && (
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="subtitle2" sx={{ color: "#CBCBCB" }}>
-            Description
-          </Typography>
-          <Typography sx={{ color: "white", backgroundColor: "#1E252D", p: 1, borderRadius: 1 }}>
-            {drawerData.description || "No description"}
-          </Typography>
-        </Box>
-      )}
+      {/* Section Block */}
+      <Box
+        sx={{
+          backgroundColor: "#1E252D",
+          borderRadius: 1,
+          p: 2,
+          mb: 2,
+          border: "1px solid #2F3A45",
+        }}
+      >
+        {"description" in drawerData && (
+          <Box sx={{ mb: 2 }}>
+            <Typography
+              variant="subtitle2"
+              sx={{ color: "#8D8D8D", mb: 0.5 }}
+            >
+              Description
+            </Typography>
+            <Typography sx={{ color: "#fff", fontWeight: 500 }}>
+              {drawerData.description || "No description"}
+            </Typography>
+          </Box>
+        )}
 
-      {/* Dummy Additional Info (Roles, Account Type, etc.) */}
-      {"roles" in drawerData && (
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="subtitle2" sx={{ color: "#CBCBCB" }}>
-            Roles
-          </Typography>
-          <Typography sx={{ color: "white" }}>{drawerData.roles}</Typography>
-        </Box>
-      )}
+        {"roles" in drawerData && (
+          <Box sx={{ mb: 2 }}>
+            <Typography
+              variant="subtitle2"
+              sx={{ color: "#8D8D8D", mb: 0.5 }}
+            >
+              Role(s)
+            </Typography>
+            <Typography sx={{ color: "#fff", fontWeight: 500 }}>
+              {drawerData.roles}
+            </Typography>
+          </Box>
+        )}
 
-      {"accountType" in drawerData && (
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="subtitle2" sx={{ color: "#CBCBCB" }}>
-            Account Type
-          </Typography>
-          <Typography sx={{ color: "white" }}>{drawerData.accountType}</Typography>
-        </Box>
-      )}
+        {"accountType" in drawerData && (
+          <Box sx={{ mb: 2 }}>
+            <Typography
+              variant="subtitle2"
+              sx={{ color: "#8D8D8D", mb: 0.5 }}
+            >
+              Account Type
+            </Typography>
+            <Typography sx={{ color: "#fff", fontWeight: 500 }}>
+              {drawerData.accountType}
+            </Typography>
+          </Box>
+        )}
 
-      {"created" in drawerData && (
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="subtitle2" sx={{ color: "#CBCBCB" }}>
-            Created Date
-          </Typography>
-          <Typography sx={{ color: "white" }}>{drawerData.created}</Typography>
-        </Box>
-      )}
-
-      {/* Data Policies (placeholder) */}
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="subtitle2" sx={{ color: "#CBCBCB" }}>
-          Data Policies
-        </Typography>
-        <Typography sx={{ color: "#999", fontStyle: "italic" }}>
-          No policies assigned
-        </Typography>
+        {"created" in drawerData && (
+          <Box sx={{}}>
+            <Typography
+              variant="subtitle2"
+              sx={{ color: "#8D8D8D", mb: 0.5 }}
+            >
+              Created Date
+            </Typography>
+            <Typography sx={{ color: "#fff", fontWeight: 500 }}>
+              {drawerData.created}
+            </Typography>
+          </Box>
+        )}
       </Box>
 
-      {/* Data Profiles (placeholder) */}
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="subtitle2" sx={{ color: "#CBCBCB" }}>
-          Data Profiles
-        </Typography>
-        <Typography sx={{ color: "#999", fontStyle: "italic" }}>
-          No data profiles configured
-        </Typography>
-      </Box>
-
-      {/* Actions */}
-      <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end", gap: 2 }}>
+      {/* Divider */}
+      <Box
+        sx={{
+          borderTop: "1px solid #2F3A45",
+          mt: "auto",
+          pt: 2,
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 2,
+        }}
+      >
         <Button
           variant="outlined"
           startIcon={<DeleteIcon />}
-          sx={{ color: "white", borderColor: "white" }}
+          sx={{
+            color: "white",
+            borderColor: "white",
+            textTransform: "none",
+          }}
         >
           Delete
         </Button>
-        <Button variant="contained" startIcon={<EditIcon />}>
+        <Button
+          variant="contained"
+          startIcon={<EditIcon />}
+          sx={{
+            backgroundColor: "#007BFF",
+            textTransform: "none",
+          }}
+        >
           Edit
         </Button>
       </Box>
-    </>
+    </Box>
   ) : (
     <Typography sx={{ color: "white" }}>No record selected</Typography>
   )}
