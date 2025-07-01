@@ -1,37 +1,32 @@
-// src/components/EntitlementUserView/CreateEntitlementUser.tsx
 import React, { useState } from "react";
 import {
   Box,
   Button,
   Grid,
   IconButton,
-  MenuItem,
-  Select,
-  SelectChangeEvent,
   TextField,
   Typography,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import styles from "./CreateEntitlementUser.module.css";
+import styles from "./CreateEntitlementUser.module.css"; // reuse same styling
 
-interface CreateEntitlementUserProps {
+interface CreateEntitlementNewProps {
   onBack: () => void;
 }
 
-export default function CreateEntitlementUser({ onBack }: CreateEntitlementUserProps) {
-  const [bankId, setBankId] = useState("");
-  const [owner, setOwner] = useState("");
-  const [role, setRole] = useState("");
-  const [accountType, setAccountType] = useState("");
-  const [status, setStatus] = useState("");
-
-  const dummyRoles = ["Maker", "Checker", "Viewer", "Admin"];
-  const dummyAccountTypes = ["User", "Admin", "System", "Manager"];
-  const dummyStatus = ["Active", "Inactive"];
+export default function CreateEntitlementNew({ onBack }: CreateEntitlementNewProps) {
+  const [entitlementName, setEntitlementName] = useState("");
+  const [description, setDescription] = useState("");
+  const [application, setApplication] = useState("");
 
   const handleSubmit = () => {
-    // TODO: call API
-    console.log({ bankId, owner, role, accountType, status });
+    const payload = {
+      entitlementName,
+      description,
+      application,
+    };
+    console.log("Creating Entitlement with:", payload);
+    // TODO: Call API later
   };
 
   return (
@@ -41,109 +36,55 @@ export default function CreateEntitlementUser({ onBack }: CreateEntitlementUserP
           <ArrowBackIcon />
         </IconButton>
         <Typography variant="h6" sx={{ color: "white", ml: 1 }}>
-          Create Entitlement User
+          Create Entitlement
         </Typography>
       </Box>
 
       <Box className={styles.formCard}>
-        <Typography className={styles.sectionTitle}>Account Details</Typography>
+        <Typography className={styles.sectionTitle}>Entitlement Details</Typography>
 
         <Grid container spacing={2} sx={{ mt: 1 }}>
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={4}>
             <TextField
               fullWidth
-              variant="outlined"
-              label="Bank ID"
               size="small"
-              value={bankId}
-              onChange={e => setBankId(e.target.value)}
-              InputProps={{ sx: { backgroundColor: "#1E252D", color: "white" } }}
-              InputLabelProps={{ sx: { color: "#CBCBCB" } }}
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              variant="outlined"
-              label="Account Owner"
-              size="small"
-              value={owner}
-              onChange={e => setOwner(e.target.value)}
+              label="Entitlement Name"
+              value={entitlementName}
+              onChange={(e) => setEntitlementName(e.target.value)}
               InputProps={{ sx: { backgroundColor: "#1E252D", color: "white" } }}
               InputLabelProps={{ sx: { color: "#CBCBCB" } }}
             />
           </Grid>
           <Grid item xs={12} md={4}>
-            <Select
+            <TextField
               fullWidth
-              displayEmpty
               size="small"
-              value={role}
-              onChange={(e: SelectChangeEvent) => setRole(e.target.value)}
-              sx={{
-                backgroundColor: "#1E252D",
-                color: role ? "white" : "#CBCBCB",
-                borderRadius: 1,
-              }}
-              renderValue={selected => selected || "Role"}
-            >
-              {dummyRoles.map(r => (
-                <MenuItem key={r} value={r}>
-                  {r}
-                </MenuItem>
-              ))}
-            </Select>
+              label="Description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              InputProps={{ sx: { backgroundColor: "#1E252D", color: "white" } }}
+              InputLabelProps={{ sx: { color: "#CBCBCB" } }}
+            />
           </Grid>
           <Grid item xs={12} md={4}>
-            <Select
+            <TextField
               fullWidth
-              displayEmpty
               size="small"
-              value={accountType}
-              onChange={(e: SelectChangeEvent) => setAccountType(e.target.value)}
-              sx={{
-                backgroundColor: "#1E252D",
-                color: accountType ? "white" : "#CBCBCB",
-                borderRadius: 1,
-              }}
-              renderValue={selected => selected || "Account Type"}
-            >
-              {dummyAccountTypes.map(t => (
-                <MenuItem key={t} value={t}>
-                  {t}
-                </MenuItem>
-              ))}
-            </Select>
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <Select
-              fullWidth
-              displayEmpty
-              size="small"
-              value={status}
-              onChange={(e: SelectChangeEvent) => setStatus(e.target.value)}
-              sx={{
-                backgroundColor: "#1E252D",
-                color: status ? "white" : "#CBCBCB",
-                borderRadius: 1,
-              }}
-              renderValue={selected => selected || "Status"}
-            >
-              {dummyStatus.map(s => (
-                <MenuItem key={s} value={s}>
-                  {s}
-                </MenuItem>
-              ))}
-            </Select>
+              label="Application"
+              value={application}
+              onChange={(e) => setApplication(e.target.value)}
+              InputProps={{ sx: { backgroundColor: "#1E252D", color: "white" } }}
+              InputLabelProps={{ sx: { color: "#CBCBCB" } }}
+            />
           </Grid>
         </Grid>
 
-        <Box sx={{ mt: 3, display: "flex", gap: 2, justifyContent: "flex-end" }}>
-          <Button variant="outlined" color="inherit" onClick={onBack}>
+        <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end", gap: 2 }}>
+          <Button variant="outlined" onClick={onBack} color="inherit">
             Cancel
           </Button>
           <Button variant="contained" onClick={handleSubmit}>
-            Create
+            Submit
           </Button>
         </Box>
       </Box>
@@ -162,6 +103,7 @@ export default function CreateEntitlementUser({ onBack }: CreateEntitlementUserP
 
 
 
+CreateEntitlementNew.tsx
 
 
 
@@ -172,28 +114,6 @@ export default function CreateEntitlementUser({ onBack }: CreateEntitlementUserP
 
 
 
-
-
-
-.container {
-  padding: 16px;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.formCard {
-  border: 1px solid #444;
-  padding: 16px;
-  border-radius: 8px;
-  background-color: #1A2028;
-}
-
-.sectionTitle {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #fff;
+onClick={() =>
+  onNavigate?.(activeTab === "1" ? "create-account" : "create-entitlement-new")
 }
