@@ -6,20 +6,20 @@ const headCellsAccounts = [
   {
     accessorKey: "status",
     header: "Status",
-    cell: (info: any) => {
-      const value = info.getValue();
-      const isActive = value.toLowerCase() === "active";
+    /** <-- Use uppercase `Cell` here */
+    Cell: ({ cell }: any) => {
+      const value = (cell.getValue() as string).toLowerCase();
+      const isActive = value === "active";
       return (
         <span
           style={{
             backgroundColor: isActive ? "#00C896" : "#D32F2F",
             color: "white",
             padding: "4px 10px",
-            borderRadius: "20px",
+            borderRadius: "12px",
             fontWeight: 600,
             fontSize: "0.75rem",
             display: "inline-block",
-            textAlign: "center",
           }}
         >
           {isActive ? "Enabled" : "Inactive"}
