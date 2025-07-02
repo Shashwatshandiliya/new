@@ -15,6 +15,7 @@ import {
   Chip,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import axios from "axios";
 import styles from "./CreateEntitlementUser.module.css";
 
 interface EditEntitlementUserProps {
@@ -28,22 +29,61 @@ export default function EditEntitlementUser({ accountId, onBack }: EditEntitleme
   const [bankId, setBankId] = useState("");
   const [owner, setOwner] = useState("");
   const [roles, setRoles] = useState<string[]>([]);
+  const [originalRoles, setOriginalRoles] = useState<string[]>([]);
   const [accountType, setAccountType] = useState("");
   const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // TODO: fetch account data by accountId
-    // mock:
+    // TODO: Fetch account data by accountId
+    // Mock fetch:
+    const fetchedRoles = ["Maker", "Checker"];
     setBankId("111111");
     setOwner("2222222");
-    setRoles(["Maker", "Checker"]);
+    setRoles(fetchedRoles);
+    setOriginalRoles(fetchedRoles);
     setAccountType("User");
     setStatus("Active");
   }, [accountId]);
 
-  const handleSave = () => {
-    console.log("Saving roles for", accountId, roles);
-    // TODO: call update API
+  const handleSave = async () => {
+    const added = roles.filter((r) => !originalRoles.includes(r));
+    const removed = originalRoles.filter((r) => !roles.includes(r));
+
+    if (added.length === 0 && removed.length === 0) {
+      onBack(); // no change
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const calls: Promise<any>[] = [];
+
+      if (added.length > 0) {
+        calls.push(
+          axios.post(`/api/accounts/${accountId}/roles/add`, {
+            roles: added,
+          })
+        );
+      }
+
+      if (removed.length > 0) {
+        calls.push(
+          axios.post(`/api/accounts/${accountId}/roles/remove`, {
+            roles: removed,
+          })
+        );
+      }
+
+      await Promise.all(calls);
+      // Optionally, show success message
+      onBack();
+    } catch (err) {
+      console.error("Error updating roles", err);
+      // TODO: show error toast/snackbar
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -82,7 +122,6 @@ export default function EditEntitlementUser({ accountId, onBack }: EditEntitleme
             />
           </Grid>
 
-          {/* Roles: multiple select */}
           <Grid item xs={12} sm={6}>
             <FormControl fullWidth size="small">
               <InputLabel sx={{ color: "#CBCBCB" }}>Role(s)</InputLabel>
@@ -92,9 +131,13 @@ export default function EditEntitlementUser({ accountId, onBack }: EditEntitleme
                 onChange={(e) => setRoles(e.target.value as string[])}
                 input={<OutlinedInput label="Role(s)" />}
                 renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                     {selected.map((value) => (
-                      <Chip key={value} label={value} sx={{ backgroundColor: "#007BFF", color: "white" }} />
+                      <Chip
+                        key={value}
+                        label={value}
+                        sx={{ backgroundColor: "#007BFF", color: "white" }}
+                      />
                     ))}
                   </Box>
                 )}
@@ -141,12 +184,16 @@ export default function EditEntitlementUser({ accountId, onBack }: EditEntitleme
           <Button variant="outlined" color="inherit" onClick={onBack} sx={{ textTransform: "none" }}>
             Cancel
           </Button>
-          <Button variant="contained" onClick={handleSave} sx={{ textTransform: "none" }}>
-            Save
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            disabled={loading}
+            sx={{ textTransform: "none" }}
+          >
+            {loading ? "Saving..." : "Save"}
           </Button>
         </Box>
       </Box>
     </Box>
   );
 }
-
