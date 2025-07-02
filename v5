@@ -10,14 +10,14 @@ import {
   Alert,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import styles from "./CreateEntitlementUser.module.css";
+import styles from "./CreateEntitlementUser.module.css"; // reuse same styling
 
 interface CreateEntitlementEntitlementUserProps {
-  onBackToEntitlements: () => void;
+  onBack: () => void;
 }
 
 export default function CreateEntitlementEntitlementUser({
-  onBackToEntitlements,
+  onBack,
 }: CreateEntitlementEntitlementUserProps) {
   const [entitlementName, setEntitlementName] = useState("");
   const [description, setDescription] = useState("");
@@ -40,25 +40,24 @@ export default function CreateEntitlementEntitlementUser({
       description,
       application,
     };
-    console.log("Creating Entitlement with:", payload);
 
-    // TODO: Replace with actual API call
+    console.log("Creating Entitlement with:", payload);
 
     // Show success snackbar
     setSnackbarMessage("Entitlement created successfully.");
     setSnackbarSeverity("success");
     setSnackbarOpen(true);
 
-    // Navigate back after short delay
+    // Go back after short delay
     setTimeout(() => {
-      onBackToEntitlements();
-    }, 1000);
+      onBack();
+    }, 2000);
   };
 
   return (
     <Box className={styles.container}>
       <Box className={styles.header}>
-        <IconButton onClick={onBackToEntitlements} sx={{ color: "white" }}>
+        <IconButton onClick={onBack} sx={{ color: "white" }}>
           <ArrowBackIcon />
         </IconButton>
         <Typography variant="h6" sx={{ color: "white", ml: 1 }}>
@@ -106,7 +105,7 @@ export default function CreateEntitlementEntitlementUser({
         </Grid>
 
         <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end", gap: 2 }}>
-          <Button variant="outlined" onClick={onBackToEntitlements} color="inherit">
+          <Button variant="outlined" onClick={onBack} color="inherit">
             Cancel
           </Button>
           <Button variant="contained" onClick={handleSubmit}>
@@ -115,7 +114,7 @@ export default function CreateEntitlementEntitlementUser({
         </Box>
       </Box>
 
-      {/* Snackbar */}
+      {/* Snackbar for feedback */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={3000}
