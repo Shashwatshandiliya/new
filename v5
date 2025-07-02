@@ -1,61 +1,54 @@
-// src/components/EntitlementUserView/CreateEntitlementUser.tsx
 import React, { useState } from "react";
 import {
   Box,
   Button,
   Grid,
   IconButton,
-  MenuItem,
-  Select,
   TextField,
   Typography,
-  SelectChangeEvent,
-  OutlinedInput,
-  Chip,
   Snackbar,
   Alert,
-  FormControl,
-  InputLabel,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import styles from "./CreateEntitlementUser.module.css";
+import styles from "./CreateEntitlementUser.module.css"; // reuse same styling
 
-interface CreateEntitlementUserProps {
+interface CreateEntitlementEntitlementUserProps {
   onBack: () => void;
 }
 
-const dummyRoles = ["Maker", "Checker", "Viewer", "Admin"];
-const dummyAccountTypes = ["User", "Admin", "System", "Manager"];
-const dummyStatus = ["Active", "Inactive"];
-
-export default function CreateEntitlementUser({ onBack }: CreateEntitlementUserProps) {
-  const [bankId, setBankId] = useState("");
-  const [owner, setOwner] = useState("");
-  const [roles, setRoles] = useState<string[]>([]);
-  const [accountType, setAccountType] = useState("");
-  const [status, setStatus] = useState("");
+export default function CreateEntitlementEntitlementUser({
+  onBack,
+}: CreateEntitlementEntitlementUserProps) {
+  const [entitlementName, setEntitlementName] = useState("");
+  const [description, setDescription] = useState("");
+  const [application, setApplication] = useState("");
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
 
   const handleSubmit = () => {
-    if (!bankId || !owner || roles.length === 0 || !accountType || !status) {
-      setSnackbarMessage("All fields are mandatory. Please complete the form.");
+    if (!entitlementName || !description || !application) {
+      setSnackbarMessage("All fields are mandatory.");
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
       return;
     }
 
-    // TODO: Replace with actual API call
-    console.log({ bankId, owner, roles, accountType, status });
+    const payload = {
+      entitlementName,
+      description,
+      application,
+    };
 
-    // Show success
-    setSnackbarMessage("Entitlement User created successfully.");
+    console.log("Creating Entitlement with:", payload);
+
+    // Show success snackbar
+    setSnackbarMessage("Entitlement created successfully.");
     setSnackbarSeverity("success");
     setSnackbarOpen(true);
 
-    // Navigate back after a short delay (2 seconds)
+    // Go back after short delay
     setTimeout(() => {
       onBack();
     }, 2000);
@@ -68,136 +61,60 @@ export default function CreateEntitlementUser({ onBack }: CreateEntitlementUserP
           <ArrowBackIcon />
         </IconButton>
         <Typography variant="h6" sx={{ color: "white", ml: 1 }}>
-          Create Entitlement User
+          Create Entitlement
         </Typography>
       </Box>
 
       <Box className={styles.formCard}>
-        <Typography className={styles.sectionTitle}>Account Details</Typography>
+        <Typography className={styles.sectionTitle}>Entitlement Details</Typography>
 
         <Grid container spacing={2} sx={{ mt: 1 }}>
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={4}>
             <TextField
               fullWidth
-              variant="outlined"
-              label="Bank ID"
               size="small"
-              value={bankId}
-              onChange={(e) => setBankId(e.target.value)}
+              label="Entitlement Name"
+              value={entitlementName}
+              onChange={(e) => setEntitlementName(e.target.value)}
               InputProps={{ sx: { backgroundColor: "#1E252D", color: "white" } }}
               InputLabelProps={{ sx: { color: "#CBCBCB" } }}
             />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={4}>
             <TextField
               fullWidth
-              variant="outlined"
-              label="Account Owner"
               size="small"
-              value={owner}
-              onChange={(e) => setOwner(e.target.value)}
+              label="Description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               InputProps={{ sx: { backgroundColor: "#1E252D", color: "white" } }}
               InputLabelProps={{ sx: { color: "#CBCBCB" } }}
             />
           </Grid>
-
-          {/* Multiple Roles */}
           <Grid item xs={12} md={4}>
-            <FormControl fullWidth size="small">
-              <InputLabel sx={{ color: "#CBCBCB" }}>Role(s)</InputLabel>
-              <Select
-                multiple
-                value={roles}
-                onChange={(e) => setRoles(e.target.value as string[])}
-                input={<OutlinedInput label="Role(s)" />}
-                renderValue={(selected) => (
-                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                    {selected.map((value) => (
-                      <Chip
-                        key={value}
-                        label={value}
-                        sx={{ backgroundColor: "#007BFF", color: "white" }}
-                      />
-                    ))}
-                  </Box>
-                )}
-                sx={{
-                  backgroundColor: "#1E252D",
-                  color: "white",
-                  borderRadius: 1,
-                }}
-              >
-                {dummyRoles.map((r) => (
-                  <MenuItem key={r} value={r}>
-                    {r}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-
-          {/* Account Type */}
-          <Grid item xs={12} md={4}>
-            <Select
+            <TextField
               fullWidth
-              displayEmpty
               size="small"
-              value={accountType}
-              onChange={(e: SelectChangeEvent) => setAccountType(e.target.value)}
-              sx={{
-                backgroundColor: "#1E252D",
-                color: accountType ? "white" : "#CBCBCB",
-                borderRadius: 1,
-              }}
-              renderValue={(selected) => selected || "Account Type"}
-            >
-              {dummyAccountTypes.map((t) => (
-                <MenuItem key={t} value={t}>
-                  {t}
-                </MenuItem>
-              ))}
-            </Select>
-          </Grid>
-
-          {/* Status */}
-          <Grid item xs={12} md={4}>
-            <Select
-              fullWidth
-              displayEmpty
-              size="small"
-              value={status}
-              onChange={(e: SelectChangeEvent) => setStatus(e.target.value)}
-              sx={{
-                backgroundColor: "#1E252D",
-                color: status ? "white" : "#CBCBCB",
-                borderRadius: 1,
-              }}
-              renderValue={(selected) => selected || "Status"}
-            >
-              {dummyStatus.map((s) => (
-                <MenuItem key={s} value={s}>
-                  {s}
-                </MenuItem>
-              ))}
-            </Select>
+              label="Application"
+              value={application}
+              onChange={(e) => setApplication(e.target.value)}
+              InputProps={{ sx: { backgroundColor: "#1E252D", color: "white" } }}
+              InputLabelProps={{ sx: { color: "#CBCBCB" } }}
+            />
           </Grid>
         </Grid>
 
-        <Box sx={{ mt: 3, display: "flex", gap: 2, justifyContent: "flex-end" }}>
-          <Button variant="outlined" color="inherit" onClick={onBack} sx={{ textTransform: "none" }}>
+        <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end", gap: 2 }}>
+          <Button variant="outlined" onClick={onBack} color="inherit">
             Cancel
           </Button>
-          <Button
-            variant="contained"
-            onClick={handleSubmit}
-            sx={{ textTransform: "none" }}
-          >
-            Create
+          <Button variant="contained" onClick={handleSubmit}>
+            Submit
           </Button>
         </Box>
       </Box>
 
-      {/* Snackbar */}
+      {/* Snackbar for feedback */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={3000}
