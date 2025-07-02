@@ -1,1 +1,251 @@
+// src/components/EntitlementUserView/CreateEntitlementUser.tsx
+import React, { useEffect, useState } from "react";
+import {
+  Box,
+  Button,
+  Grid,
+  IconButton,
+  MenuItem,
+  Select,
+  TextField,
+  Typography,
+  SelectChangeEvent,
+  OutlinedInput,
+  Chip,
+  Snackbar,
+  Alert,
+  FormControl,
+  InputLabel,
+} from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import styles from "./CreateEntitlementUser.module.css";
+import axios from "axios";
+
+interface CreateEntitlementUserProps {
+  onBack: () => void;
+}
+
+const dummyAccountTypes = ["User", "Admin", "System", "Manager"];
+const dummyStatus = ["ACTIVE", "INACTIVE"];
+
+export default function CreateEntitlementUser({ onBack }: CreateEntitlementUserProps) {
+  const [bankId, setBankId] = useState("");
+  const [owner, setOwner] = useState("");
+  const [roles, setRoles] = useState<string[]>([]);
+  const [allRoles, setAllRoles] = useState<string[]>([]);
+  const [accountType, setAccountType] = useState("");
+  const [status, setStatus] = useState("");
+
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
+
+  useEffect(() => {
+    // Fetch available roles from API
+    const fetchRoles = async () => {
+      try {
+        const res = await axios.get("http://mc.shashwat.com:69696/restService/one/entity");
+        const roleNames = (res.data.entitlements || []).map((e: any) => e.entitlementName);
+        setAllRoles(roleNames);
+      } catch (error) {
+        console.error("Failed to load roles", error);
+        setSnackbarMessage("Failed to load roles.");
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
+      }
+    };
+
+    fetchRoles();
+  }, []);
+
+  const handleSubmit = async () => {
+    if (!bankId || !owner || roles.length === 0 || !accountType || !status) {
+      setSnackbarMessage("Please fill all fields and select at least one role.");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+      return;
+    }
+
+    const payload = {
+      accountOwner: owner,
+      accountName: bankId,
+      accountType,
+      accountStatus: status,
+      accessRoles: roles.map((roleName) => ({ roleName })),
+    };
+
+    try {
+      await axios.post("http://mc.shashwat.com:69696/restService/one/createAccount", payload);
+      setSnackbarMessage("Entitlement User created successfully.");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+
+      // Reset form
+      setBankId("");
+      setOwner("");
+      setRoles([]);
+      setAccountType("");
+      setStatus("");
+    } catch (error) {
+      console.error("Account creation failed", error);
+      setSnackbarMessage("Failed to create account.");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    }
+  };
+
+  return (
+    <Box className={styles.container}>
+      <Box className={styles.header}>
+        <IconButton onClick={onBack} sx={{ color: "white" }}>
+          <ArrowBackIcon />
+        </IconButton>
+        <Typography variant="h6" sx={{ color: "white", ml: 1 }}>
+          Create Entitlement User
+        </Typography>
+      </Box>
+
+      <Box className={styles.formCard}>
+        <Typography className={styles.sectionTitle}>Account Details</Typography>
+
+        <Grid container spacing={2} sx={{ mt: 1 }}>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              variant="outlined"
+              label="Bank ID"
+              size="small"
+              value={bankId}
+              onChange={(e) => setBankId(e.target.value)}
+              InputProps={{ sx: { backgroundColor: "#1E252D", color: "white" } }}
+              InputLabelProps={{ sx: { color: "#CBCBCB" } }}
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              variant="outlined"
+              label="Account Owner"
+              size="small"
+              value={owner}
+              onChange={(e) => setOwner(e.target.value)}
+              InputProps={{ sx: { backgroundColor: "#1E252D", color: "white" } }}
+              InputLabelProps={{ sx: { color: "#CBCBCB" } }}
+            />
+          </Grid>
+
+          {/* Multiple Roles */}
+          <Grid item xs={12} md={4}>
+            <FormControl fullWidth size="small">
+              <InputLabel sx={{ color: "#CBCBCB" }}>Role(s)</InputLabel>
+              <Select
+                multiple
+                value={roles}
+                onChange={(e) => setRoles(e.target.value as string[])}
+                input={<OutlinedInput label="Role(s)" />}
+                renderValue={(selected) => (
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                    {selected.map((value) => (
+                      <Chip
+                        key={value}
+                        label={value}
+                        sx={{ backgroundColor: "#007BFF", color: "white" }}
+                      />
+                    ))}
+                  </Box>
+                )}
+                sx={{
+                  backgroundColor: "#1E252D",
+                  color: "white",
+                  borderRadius: 1,
+                }}
+              >
+                {allRoles.map((r) => (
+                  <MenuItem key={r} value={r}>
+                    {r}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          {/* Account Type */}
+          <Grid item xs={12} md={4}>
+            <Select
+              fullWidth
+              displayEmpty
+              size="small"
+              value={accountType}
+              onChange={(e: SelectChangeEvent) => setAccountType(e.target.value)}
+              sx={{
+                backgroundColor: "#1E252D",
+                color: accountType ? "white" : "#CBCBCB",
+                borderRadius: 1,
+              }}
+              renderValue={(selected) => selected || "Account Type"}
+            >
+              {dummyAccountTypes.map((t) => (
+                <MenuItem key={t} value={t}>
+                  {t}
+                </MenuItem>
+              ))}
+            </Select>
+          </Grid>
+
+          {/* Status */}
+          <Grid item xs={12} md={4}>
+            <Select
+              fullWidth
+              displayEmpty
+              size="small"
+              value={status}
+              onChange={(e: SelectChangeEvent) => setStatus(e.target.value)}
+              sx={{
+                backgroundColor: "#1E252D",
+                color: status ? "white" : "#CBCBCB",
+                borderRadius: 1,
+              }}
+              renderValue={(selected) => selected || "Status"}
+            >
+              {dummyStatus.map((s) => (
+                <MenuItem key={s} value={s}>
+                  {s}
+                </MenuItem>
+              ))}
+            </Select>
+          </Grid>
+        </Grid>
+
+        <Box sx={{ mt: 3, display: "flex", gap: 2, justifyContent: "flex-end" }}>
+          <Button variant="outlined" color="inherit" onClick={onBack} sx={{ textTransform: "none" }}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSubmit}
+            sx={{ textTransform: "none" }}
+          >
+            Create
+          </Button>
+        </Box>
+      </Box>
+
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          severity={snackbarSeverity}
+          onClose={() => setSnackbarOpen(false)}
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
+    </Box>
+  );
+}
 
