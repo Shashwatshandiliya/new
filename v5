@@ -1,1 +1,152 @@
+// src/components/EntitlementUserView/EditEntitlementUser.tsx
+import React, { useState, useEffect } from "react";
+import {
+  Box,
+  Button,
+  Grid,
+  TextField,
+  Typography,
+  IconButton,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl,
+  OutlinedInput,
+  Chip,
+} from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import styles from "./CreateEntitlementUser.module.css";
+
+interface EditEntitlementUserProps {
+  accountId: string;
+  onBack: () => void;
+}
+
+const dummyRoles = ["Maker", "Checker", "Viewer", "Admin"];
+
+export default function EditEntitlementUser({ accountId, onBack }: EditEntitlementUserProps) {
+  const [bankId, setBankId] = useState("");
+  const [owner, setOwner] = useState("");
+  const [roles, setRoles] = useState<string[]>([]);
+  const [accountType, setAccountType] = useState("");
+  const [status, setStatus] = useState("");
+
+  useEffect(() => {
+    // TODO: fetch account data by accountId
+    // mock:
+    setBankId("111111");
+    setOwner("2222222");
+    setRoles(["Maker", "Checker"]);
+    setAccountType("User");
+    setStatus("Active");
+  }, [accountId]);
+
+  const handleSave = () => {
+    console.log("Saving roles for", accountId, roles);
+    // TODO: call update API
+  };
+
+  return (
+    <Box className={styles.container}>
+      <Box className={styles.header}>
+        <IconButton onClick={onBack} sx={{ color: "white" }}>
+          <ArrowBackIcon />
+        </IconButton>
+        <Typography variant="h6" sx={{ color: "white", ml: 1 }}>
+          Edit Account #{accountId}
+        </Typography>
+      </Box>
+      <Box className={styles.formCard}>
+        <Typography className={styles.sectionTitle}>Account Details</Typography>
+        <Grid container spacing={2} sx={{ mt: 1 }}>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Bank ID"
+              size="small"
+              value={bankId}
+              disabled
+              InputProps={{ sx: { backgroundColor: "#2F3A45", color: "white" } }}
+              InputLabelProps={{ sx: { color: "#CBCBCB" } }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Account Owner"
+              size="small"
+              value={owner}
+              disabled
+              InputProps={{ sx: { backgroundColor: "#2F3A45", color: "white" } }}
+              InputLabelProps={{ sx: { color: "#CBCBCB" } }}
+            />
+          </Grid>
+
+          {/* Roles: multiple select */}
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth size="small">
+              <InputLabel sx={{ color: "#CBCBCB" }}>Role(s)</InputLabel>
+              <Select
+                multiple
+                value={roles}
+                onChange={(e) => setRoles(e.target.value as string[])}
+                input={<OutlinedInput label="Role(s)" />}
+                renderValue={(selected) => (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {selected.map((value) => (
+                      <Chip key={value} label={value} sx={{ backgroundColor: "#007BFF", color: "white" }} />
+                    ))}
+                  </Box>
+                )}
+                sx={{
+                  backgroundColor: "#1E252D",
+                  color: "white",
+                  borderRadius: 1,
+                }}
+              >
+                {dummyRoles.map((r) => (
+                  <MenuItem key={r} value={r}>
+                    {r}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Account Type"
+              size="small"
+              value={accountType}
+              disabled
+              InputProps={{ sx: { backgroundColor: "#2F3A45", color: "white" } }}
+              InputLabelProps={{ sx: { color: "#CBCBCB" } }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Status"
+              size="small"
+              value={status}
+              disabled
+              InputProps={{ sx: { backgroundColor: "#2F3A45", color: "white" } }}
+              InputLabelProps={{ sx: { color: "#CBCBCB" } }}
+            />
+          </Grid>
+        </Grid>
+
+        <Box sx={{ mt: 3, display: "flex", gap: 2, justifyContent: "flex-end" }}>
+          <Button variant="outlined" color="inherit" onClick={onBack} sx={{ textTransform: "none" }}>
+            Cancel
+          </Button>
+          <Button variant="contained" onClick={handleSave} sx={{ textTransform: "none" }}>
+            Save
+          </Button>
+        </Box>
+      </Box>
+    </Box>
+  );
+}
 
