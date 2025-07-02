@@ -1,345 +1,200 @@
-// src/components/EntitlementUserView/EntitlementUserView.tsx
-import * as React from "react";
-import axios from "axios";
-import Grid from "@mui/material/Grid";
-import Button from "@mui/material/Button";
-import Box from "@mui/material/Box";
-import MaterialTable from "../../../Root/components/MaterialTable";
+// src/components/EntitlementUserView/EditEntitlementUser.tsx
+import React, { useState, useEffect } from "react";
 import {
-  InputAdornment,
+  Box,
+  Button,
+  Grid,
   TextField,
   Typography,
-  CircularProgress,
-  Divider,
+  IconButton,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl,
+  OutlinedInput,
+  Chip,
+  Snackbar,
+  Alert
 } from "@mui/material";
-import AddCircleIcon from "@mui/icons-material/AddCircle";
-import SearchIcon from "@mui/icons-material/Search";
-import { Tabs } from "antd";
-import Drawer from "@mui/material/Drawer";
-import styles from "./EntitlementUserView.module.css";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import axios from "axios";
+import styles from "./CreateEntitlementUser.module.css";
 
-const { TabPane } = Tabs;
-
-interface AccountRow {
-  accountOwner: string;
-  accountName: string;
-  accountType: string;
-  accessRoles: { roleName: string }[];
-  accountStatus: string;
+interface EditEntitlementUserProps {
+  accountId: string;      // this is the accountName
+  onBack: () => void;
 }
 
-interface EntitlementRow {
-  entitlementName: string;
-  entitlementDescription: string;
-  entitlementOwner: string;
-  isPrivileged: string;
-}
+const allRoles = ["Maker", "Checker", "Viewer", "Admin"];
 
-export default function EntitlementUserView({
-  onNavigate,
-  onEditAccount,
-}: {
-  onNavigate?: (tab: string) => void;
-  onEditAccount?: (id: string) => void;
-}) {
-  const [activeTab, setActiveTab] = React.useState<"1" | "2">("1");
-  const [drawerOpen, setDrawerOpen] = React.useState(false);
-  const [drawerData, setDrawerData] = React.useState<any>(null);
-  const [searchTerm, setSearchTerm] = React.useState("");
+export default function EditEntitlementUser({ accountId, onBack }: EditEntitlementUserProps) {
+  const [accountName, setAccountName] = useState("");
+  const [roles, setRoles] = useState<string[]>([]);
+  const [originalRoles, setOriginalRoles] = useState<string[]>([]);
+  const [accountType, setAccountType] = useState("");
+  const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const [accounts, setAccounts] = React.useState<AccountRow[]>([]);
-  const [entitlements, setEntitlements] = React.useState<EntitlementRow[]>([]);
-  const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState("");
+  // Snackbar state
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
 
-  const loadAllAccounts = async () => {
-    setError("");
-    try {
-      setLoading(true);
-      const { data } = await axios.get(
-        "http://mc.shashwat.com:69696/restService/one/aacc"
-      );
-      setAccounts(data.accounts || []);
-    } catch {
-      setError("Failed to load accounts");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Fetch the specific account details when mounted
+  useEffect(() => {
+    const fetchAccount = async () => {
+      try {
+        setLoading(true);
+        const resp = await axios.get("http://mc.shashwat.com:69696/restService/one/aacc");
+        // find the one matching accountName === accountId
+        const acct = (resp.data.accounts || []).find(
+          (a: any) => a.accountName === accountId
+        );
+        if (!acct) throw new Error("Account not found");
+        setAccountName(acct.accountName);
+        const fetchedRoles = acct.accessRoles.map((r: any) => r.roleName);
+        setRoles(fetchedRoles);
+        setOriginalRoles(fetchedRoles);
+        setAccountType(acct.accountType);
+        setStatus(acct.accountStatus);
+      } catch (err) {
+        console.error("Error fetching account", err);
+        setSnackbarMessage("Failed to load account details");
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAccount();
+  }, [accountId]);
 
-  const loadAllEntitlements = async () => {
-    setError("");
-    try {
-      setLoading(true);
-      const { data } = await axios.get(
-        "http://mc.shashwat.com:69696/restService/one/entity"
-      );
-      setEntitlements(data.entitlements || []);
-    } catch {
-      setError("Failed to load entitlements");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handleSave = async () => {
+    const added = roles.filter(r => !originalRoles.includes(r));
+    const removed = originalRoles.filter(r => !roles.includes(r));
 
-  React.useEffect(() => {
-    if (activeTab === "1") loadAllAccounts();
-    else loadAllEntitlements();
-  }, [activeTab]);
-
-  const handleSearch = async () => {
-    setError("");
-    if (!searchTerm) {
-      activeTab === "1" ? loadAllAccounts() : loadAllEntitlements();
+    if (added.length === 0 && removed.length === 0) {
+      setSnackbarMessage("No changes detected.");
+      setSnackbarSeverity("info");
+      setSnackbarOpen(true);
       return;
     }
+
     try {
       setLoading(true);
-      if (activeTab === "1") {
-        const { data } = await axios.get(
-          `http://mc.shashwat.com:69696/restService/one/account/${searchTerm}`
+      // call addEntity if any added
+      if (added.length > 0) {
+        await axios.post(
+          "http://mc.shashwat.com:69696/restService/one/addEntity",
+          { accountName, roles: added }
         );
-        // API returns single account? wrap in array
-        setAccounts(data ? [data] : []);
-      } else {
-        const { data } = await axios.get(
-          `http://mc.shashwat.com:69696/restService/one/entitlement/${searchTerm}`
-        );
-        setEntitlements(data ? [data] : []);
       }
-    } catch {
-      setError("No results found");
+      // call removeEntity if any removed
+      if (removed.length > 0) {
+        await axios.post(
+          "http://mc.shashwat.com:69696/restService/one/removeEntity",
+          { accountName, roles: removed }
+        );
+      }
+      setOriginalRoles([...roles]);
+      setSnackbarMessage("Roles updated successfully.");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+    } catch (err) {
+      console.error("Error updating roles", err);
+      setSnackbarMessage("Failed to update roles.");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const headCellsAccounts = [
-    { accessorKey: "accountOwner", header: "Account Owner" },
-    { accessorKey: "accountName", header: "Account Name" },
-    {
-      accessorKey: "accessRoles",
-      header: "Roles",
-      Cell: ({ cell }: any) =>
-        (cell.getValue() as { roleName: string }[])
-          .map((r) => r.roleName)
-          .join(", "),
-    },
-    {
-      accessorKey: "accountStatus",
-      header: "Status",
-      Cell: ({ cell }: any) => {
-        const v = (cell.getValue() as string).toLowerCase();
-        const active = v === "active";
-        return (
-          <span
-            style={{
-              backgroundColor: active ? "#2BCBC11A" : "#ff00001A",
-              color: active ? "#2BCBC1" : "#ff0000",
-              padding: "0.25rem 0.5rem",
-              borderRadius: "20px",
-            }}
-          >
-            {active ? "Enabled" : "Inactive"}
-          </span>
-        );
-      },
-    },
-    { accessorKey: "accountType", header: "Account Type" },
-  ];
-
-  const headCellsEntitlements = [
-    { accessorKey: "entitlementName", header: "Name" },
-    { accessorKey: "entitlementDescription", header: "Description" },
-    { accessorKey: "entitlementOwner", header: "Owner" },
-    { accessorKey: "isPrivileged", header: "Privileged" },
-  ];
-
-  const openDrawer = (row: any) => {
-    setDrawerData(row);
-    setDrawerOpen(true);
-  };
-
-  const deleteAccount = async (accountName: string) => {
-    try {
-      await axios.post(
-        "http://mc.shashwat.com:69696/restService/one/Delete",
-        { accountName }
-      );
-      // reload list
-      loadAllAccounts();
-      setDrawerOpen(false);
-    } catch {
-      alert("Failed to delete account");
     }
   };
 
   return (
-    <div className={styles.container}>
-      <Typography
-        fontFamily="Poppins"
-        sx={{ fontWeight: 500, fontSize: 20, color: "white", mb: 2 }}
-      >
-        Entitlement Users
-      </Typography>
+    <Box className={styles.container}>
+      <Box className={styles.header}>
+        <IconButton onClick={onBack} sx={{ color: "white" }}>
+          <ArrowBackIcon />
+        </IconButton>
+        <Typography variant="h6" sx={{ color: "white", ml: 1 }}>
+          Edit Account #{accountName || accountId}
+        </Typography>
+      </Box>
 
-      <Tabs
-        activeKey={activeTab}
-        onChange={(k) => {
-          setActiveTab(k as "1" | "2");
-          setSearchTerm("");
-          setDrawerOpen(false);
-        }}
-        className={styles.tabs}
-      >
-        <TabPane
-          tab={
-            <span style={{ fontWeight: 600, color: activeTab === "1" ? "#007BFF" : "#8D8D8D" }}>
-              Accounts
-            </span>
-          }
-          key="1"
-        />
-        <TabPane
-          tab={
-            <span style={{ fontWeight: 600, color: activeTab === "2" ? "#007BFF" : "#8D8D8D" }}>
-              Entitlements
-            </span>
-          }
-          key="2"
-        />
-      </Tabs>
-
-      <Box className={styles.filterSection}>
-        <Grid container alignItems="center" spacing={2} wrap="nowrap">
-          <Grid item xs={12} md={6} lg={5}>
+      <Box className={styles.formCard}>
+        <Typography className={styles.sectionTitle}>Account Details</Typography>
+        <Grid container spacing={2} sx={{ mt: 1 }}>
+          <Grid item xs={12} sm={6}>
             <TextField
-              placeholder={
-                activeTab === "1"
-                  ? "Search by owner/name"
-                  : "Search entitlement name"
-              }
-              size="small"
-              fullWidth
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon sx={{ color: "#CBCBCB" }} />
-                  </InputAdornment>
-                ),
-                sx: { backgroundColor: "#1E252D", color: "white", borderRadius: 1 },
-              }}
+              fullWidth label="Account Name" size="small"
+              value={accountName} disabled
+              InputProps={{ sx: { backgroundColor: "#2F3A45", color: "white" } }}
+              InputLabelProps={{ sx: { color: "#CBCBCB" } }}
             />
           </Grid>
-          <Grid item xs={6} md={2} lg={1}>
-            <Button variant="outlined" size="small" onClick={handleSearch}
-              sx={{ color: "white", borderColor: "white", height: 36, width: "100%" }}
-            >
-              Search
-            </Button>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth label="Status" size="small"
+              value={status} disabled
+              InputProps={{ sx: { backgroundColor: "#2F3A45", color: "white" } }}
+              InputLabelProps={{ sx: { color: "#CBCBCB" } }}
+            />
           </Grid>
-          <Grid item xs={6} md={6} lg={8} textAlign="right">
-            <Button
-              variant="contained"
-              startIcon={<AddCircleIcon />}
-              onClick={() =>
-                onNavigate?.(
-                  activeTab === "1" ? "create-account" : "create-entitlement-user"
-                )
-              }
-              sx={{ height: 36, fontWeight: 600, fontSize: 12 }}
-            >
-              {activeTab === "1" ? "Create Account" : "Create Entitlement"}
-            </Button>
+
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth size="small">
+              <InputLabel sx={{ color: "#CBCBCB" }}>Role(s)</InputLabel>
+              <Select
+                multiple
+                value={roles}
+                onChange={(e) => setRoles(e.target.value as string[])}
+                input={<OutlinedInput label="Role(s)" />}
+                renderValue={(sel) => (
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                    {sel.map((v) => (
+                      <Chip key={v} label={v} sx={{ bgcolor: "#007BFF", color: "white" }} />
+                    ))}
+                  </Box>
+                )}
+                sx={{ bgcolor: "#1E252D", color: "white", borderRadius: 1 }}
+              >
+                {allRoles.map((r) => (
+                  <MenuItem key={r} value={r}>{r}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth label="Account Type" size="small"
+              value={accountType} disabled
+              InputProps={{ sx: { backgroundColor: "#2F3A45", color: "white" } }}
+              InputLabelProps={{ sx: { color: "#CBCBCB" } }}
+            />
           </Grid>
         </Grid>
+
+        <Box sx={{ mt: 3, display: "flex", gap: 2, justifyContent: "flex-end" }}>
+          <Button variant="outlined" color="inherit" onClick={onBack} sx={{ textTransform: "none" }}>
+            Cancel
+          </Button>
+          <Button variant="contained" onClick={handleSave} disabled={loading} sx={{ textTransform: "none" }}>
+            {loading ? "Saving..." : "Save"}
+          </Button>
+        </Box>
       </Box>
 
-      <Box className={styles.tableSection}>
-        {loading ? (
-          <Box sx={{ textAlign: "center", p: 4 }}>
-            <CircularProgress sx={{ color: "white" }} />
-          </Box>
-        ) : error ? (
-          <Typography sx={{ color: "red", textAlign: "center" }}>{error}</Typography>
-        ) : (
-          <Box sx={{ border: "1px solid #444", p: 2, borderRadius: 1, bgcolor: "#1A2028", mt: 2 }}>
-            <MaterialTable
-              tableRows={activeTab === "1" ? accounts : entitlements}
-              tableCols={activeTab === "1" ? headCellsAccounts : headCellsEntitlements}
-              globalSearch={false}
-              onRowClick={(r) => openDrawer(r as any)}
-            />
-          </Box>
-        )}
-      </Box>
-
-      <Drawer
-        anchor="right"
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        sx={{ "& .MuiDrawer-paper": { width: 420, bgcolor: "#1A2028", p: 3, borderLeft: "1px solid #2F3A45" } }}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        {drawerData && (
-          <>
-            <Typography variant="h6" sx={{ color: "white", fontWeight: 600, mb: 1 }}>
-              {drawerData.accountName || drawerData.entitlementName}
-            </Typography>
-            <Divider sx={{ bgcolor: "#2F3A45", mb: 2 }} />
-
-            <Box sx={{ bgcolor: "#1E252D", p: 2, borderRadius: 1 }}>
-              {activeTab === "1" ? (
-                <>
-                  <Typography sx={{ color: "#8D8D8D", mb: .5 }}>Owner</Typography>
-                  <Typography sx={{ color: "white", mb: 1 }}>{drawerData.accountOwner}</Typography>
-                  <Typography sx={{ color: "#8D8D8D", mb: .5 }}>Roles</Typography>
-                  <Typography sx={{ color: "white", mb: 1 }}>
-                    {drawerData.accessRoles.map((r:any) => r.roleName).join(", ")}
-                  </Typography>
-                  <Typography sx={{ color: "#8D8D8D", mb: .5 }}>Status</Typography>
-                  <Typography sx={{ color: "white", mb: 1 }}>{drawerData.accountStatus}</Typography>
-                  <Typography sx={{ color: "#8D8D8D", mb: .5 }}>Type</Typography>
-                  <Typography sx={{ color: "white" }}>{drawerData.accountType}</Typography>
-                </>
-              ) : (
-                <>
-                  <Typography sx={{ color: "#8D8D8D", mb: .5 }}>Description</Typography>
-                  <Typography sx={{ color: "white", mb: 1 }}>{drawerData.entitlementDescription}</Typography>
-                  <Typography sx={{ color: "#8D8D8D", mb: .5 }}>Owner</Typography>
-                  <Typography sx={{ color: "white", mb: 1 }}>{drawerData.entitlementOwner}</Typography>
-                  <Typography sx={{ color: "#8D8D8D", mb: .5 }}>Privileged</Typography>
-                  <Typography sx={{ color: "white" }}>{drawerData.isPrivileged}</Typography>
-                </>
-              )}
-            </Box>
-
-            {activeTab === "1" && (
-              <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end", gap: 1 }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<DeleteIcon />}
-                  sx={{ color: "white", borderColor: "white", textTransform: "none" }}
-                  onClick={() => deleteAccount(drawerData.accountName)}
-                >
-                  Delete
-                </Button>
-                <Button
-                  variant="contained"
-                  startIcon={<EditIcon />}
-                  sx={{ textTransform: "none" }}
-                  onClick={() => onEditAccount?.(drawerData.accountOwner)}
-                >
-                  Edit
-                </Button>
-              </Box>
-            )}
-          </>
-        )}
-      </Drawer>
-    </div>
+        <Alert severity={snackbarSeverity} onClose={() => setSnackbarOpen(false)} sx={{ width: "100%" }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
+    </Box>
   );
 }
