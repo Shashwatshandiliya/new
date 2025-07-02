@@ -1,66 +1,105 @@
-// src/components/EntitlementUserView/CreateEntitlementUser.tsx
-import React, { useState } from "react";
+// src/components/EntitlementUserView/EditEntitlementUser.tsx
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Button,
   Grid,
-  IconButton,
-  MenuItem,
-  Select,
   TextField,
   Typography,
-  SelectChangeEvent,
+  IconButton,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl,
   OutlinedInput,
   Chip,
   Snackbar,
-  Alert,
-  FormControl,
-  InputLabel,
+  Alert
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import axios from "axios";
 import styles from "./CreateEntitlementUser.module.css";
 
-interface CreateEntitlementUserProps {
+interface EditEntitlementUserProps {
+  accountId: string;
   onBack: () => void;
 }
 
 const dummyRoles = ["Maker", "Checker", "Viewer", "Admin"];
-const dummyAccountTypes = ["User", "Admin", "System", "Manager"];
-const dummyStatus = ["Active", "Inactive"];
 
-export default function CreateEntitlementUser({ onBack }: CreateEntitlementUserProps) {
+export default function EditEntitlementUser({ accountId, onBack }: EditEntitlementUserProps) {
   const [bankId, setBankId] = useState("");
   const [owner, setOwner] = useState("");
   const [roles, setRoles] = useState<string[]>([]);
+  const [originalRoles, setOriginalRoles] = useState<string[]>([]);
   const [accountType, setAccountType] = useState("");
   const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error" | "info">("success");
 
-  const handleSubmit = () => {
-    if (!bankId || !owner || roles.length === 0 || !accountType || !status) {
-      setSnackbarMessage("Please fill all fields and select at least one role.");
+  useEffect(() => {
+    // Replace with actual fetch
+    const fetchedRoles = ["Maker", "Checker"];
+    setBankId("111111");
+    setOwner("2222222");
+    setRoles(fetchedRoles);
+    setOriginalRoles(fetchedRoles);
+    setAccountType("User");
+    setStatus("Active");
+  }, [accountId]);
+
+  const handleSave = async () => {
+    if (roles.length === 0) {
+      setSnackbarMessage("At least one role must be selected.");
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
       return;
     }
 
-    // TODO: Replace with actual API call
-    console.log({ bankId, owner, roles, accountType, status });
+    const added = roles.filter((r) => !originalRoles.includes(r));
+    const removed = originalRoles.filter((r) => !roles.includes(r));
 
-    // Show success
-    setSnackbarMessage("Entitlement User created successfully.");
-    setSnackbarSeverity("success");
-    setSnackbarOpen(true);
+    if (added.length === 0 && removed.length === 0) {
+      setSnackbarMessage("No changes detected.");
+      setSnackbarSeverity("info");
+      setSnackbarOpen(true);
+      return;
+    }
 
-    // Optionally reset the form
-    setBankId("");
-    setOwner("");
-    setRoles([]);
-    setAccountType("");
-    setStatus("");
+    try {
+      setLoading(true);
+      const calls: Promise<any>[] = [];
+
+      if (added.length > 0) {
+        calls.push(axios.post(`/api/accounts/${accountId}/roles/add`, { roles: added }));
+      }
+
+      if (removed.length > 0) {
+        calls.push(axios.post(`/api/accounts/${accountId}/roles/remove`, { roles: removed }));
+      }
+
+      await Promise.all(calls);
+
+      setSnackbarMessage("Roles updated successfully.");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+      setOriginalRoles(roles);
+
+      // ✅ Go back after 2 seconds
+      setTimeout(() => {
+        onBack();
+      }, 2000);
+    } catch (error) {
+      console.error("Error updating roles", error);
+      setSnackbarMessage("Failed to update roles.");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -70,41 +109,37 @@ export default function CreateEntitlementUser({ onBack }: CreateEntitlementUserP
           <ArrowBackIcon />
         </IconButton>
         <Typography variant="h6" sx={{ color: "white", ml: 1 }}>
-          Create Entitlement User
+          Edit Account #{accountId}
         </Typography>
       </Box>
 
       <Box className={styles.formCard}>
         <Typography className={styles.sectionTitle}>Account Details</Typography>
-
         <Grid container spacing={2} sx={{ mt: 1 }}>
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
-              variant="outlined"
               label="Bank ID"
               size="small"
               value={bankId}
-              onChange={(e) => setBankId(e.target.value)}
-              InputProps={{ sx: { backgroundColor: "#1E252D", color: "white" } }}
+              disabled
+              InputProps={{ sx: { backgroundColor: "#2F3A45", color: "white" } }}
               InputLabelProps={{ sx: { color: "#CBCBCB" } }}
             />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
-              variant="outlined"
               label="Account Owner"
               size="small"
               value={owner}
-              onChange={(e) => setOwner(e.target.value)}
-              InputProps={{ sx: { backgroundColor: "#1E252D", color: "white" } }}
+              disabled
+              InputProps={{ sx: { backgroundColor: "#2F3A45", color: "white" } }}
               InputLabelProps={{ sx: { color: "#CBCBCB" } }}
             />
           </Grid>
 
-          {/* Multiple Roles */}
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} sm={6}>
             <FormControl fullWidth size="small">
               <InputLabel sx={{ color: "#CBCBCB" }}>Role(s)</InputLabel>
               <Select
@@ -138,50 +173,27 @@ export default function CreateEntitlementUser({ onBack }: CreateEntitlementUserP
             </FormControl>
           </Grid>
 
-          {/* Account Type */}
-          <Grid item xs={12} md={4}>
-            <Select
+          <Grid item xs={12} sm={6}>
+            <TextField
               fullWidth
-              displayEmpty
+              label="Account Type"
               size="small"
               value={accountType}
-              onChange={(e: SelectChangeEvent) => setAccountType(e.target.value)}
-              sx={{
-                backgroundColor: "#1E252D",
-                color: accountType ? "white" : "#CBCBCB",
-                borderRadius: 1,
-              }}
-              renderValue={(selected) => selected || "Account Type"}
-            >
-              {dummyAccountTypes.map((t) => (
-                <MenuItem key={t} value={t}>
-                  {t}
-                </MenuItem>
-              ))}
-            </Select>
+              disabled
+              InputProps={{ sx: { backgroundColor: "#2F3A45", color: "white" } }}
+              InputLabelProps={{ sx: { color: "#CBCBCB" } }}
+            />
           </Grid>
-
-          {/* Status */}
-          <Grid item xs={12} md={4}>
-            <Select
+          <Grid item xs={12} sm={6}>
+            <TextField
               fullWidth
-              displayEmpty
+              label="Status"
               size="small"
               value={status}
-              onChange={(e: SelectChangeEvent) => setStatus(e.target.value)}
-              sx={{
-                backgroundColor: "#1E252D",
-                color: status ? "white" : "#CBCBCB",
-                borderRadius: 1,
-              }}
-              renderValue={(selected) => selected || "Status"}
-            >
-              {dummyStatus.map((s) => (
-                <MenuItem key={s} value={s}>
-                  {s}
-                </MenuItem>
-              ))}
-            </Select>
+              disabled
+              InputProps={{ sx: { backgroundColor: "#2F3A45", color: "white" } }}
+              InputLabelProps={{ sx: { color: "#CBCBCB" } }}
+            />
           </Grid>
         </Grid>
 
@@ -191,10 +203,11 @@ export default function CreateEntitlementUser({ onBack }: CreateEntitlementUserP
           </Button>
           <Button
             variant="contained"
-            onClick={handleSubmit}
+            onClick={handleSave}
+            disabled={loading}
             sx={{ textTransform: "none" }}
           >
-            Create
+            {loading ? "Saving..." : "Save"}
           </Button>
         </Box>
       </Box>
@@ -206,11 +219,7 @@ export default function CreateEntitlementUser({ onBack }: CreateEntitlementUserP
         onClose={() => setSnackbarOpen(false)}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <Alert
-          severity={snackbarSeverity}
-          onClose={() => setSnackbarOpen(false)}
-          sx={{ width: "100%" }}
-        >
+        <Alert severity={snackbarSeverity} onClose={() => setSnackbarOpen(false)} sx={{ width: "100%" }}>
           {snackbarMessage}
         </Alert>
       </Snackbar>
