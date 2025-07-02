@@ -1,134 +1,394 @@
-import React, { useState } from "react";
+// src/components/EntitlementUserView/EntitlementUserView.tsx
+import * as React from "react";
+import axios from "axios";
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
+import Box from "@mui/material/Box";
+import MaterialTable from "../../../Root/components/MaterialTable";
 import {
-  Box,
-  Button,
-  Grid,
-  IconButton,
+  InputAdornment,
   TextField,
   Typography,
-  Snackbar,
-  Alert,
+  CircularProgress,
 } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import styles from "./CreateEntitlementUser.module.css"; // reuse same styling
+import AddCircleIcon from "@mui/icons-material/AddCircle";
+import SearchIcon from "@mui/icons-material/Search";
+import { Tabs } from "antd";
+import Drawer from "@mui/material/Drawer";
+import styles from "./EntitlementUserView.module.css";
+import EditIcon from "@mui/icons-material/Edit";
 
-interface CreateEntitlementEntitlementUserProps {
-  onBack: () => void;
+const { TabPane } = Tabs;
+
+interface AccountRow {
+  accountOwner: string;
+  accountName: string;
+  accountType: string;
+  accessRoles: { roleName: string }[];
+  accountStatus: string;
 }
 
-export default function CreateEntitlementEntitlementUser({
-  onBack,
-}: CreateEntitlementEntitlementUserProps) {
-  const [entitlementName, setEntitlementName] = useState("");
-  const [description, setDescription] = useState("");
-  const [application, setApplication] = useState("");
+interface EntitlementRow {
+  entitlementName: string;
+  entitlementDescription: string;
+  entitlementOwner: string;
+  isPrivileged: string;
+}
 
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
+interface EntitlementUserViewProps {
+  onNavigate?: (tab: string) => void;
+  onEditAccount?: (id: string) => void;
+}
 
-  const handleSubmit = () => {
-    if (!entitlementName || !description || !application) {
-      setSnackbarMessage("All fields are mandatory.");
-      setSnackbarSeverity("error");
-      setSnackbarOpen(true);
-      return;
+export default function EntitlementUserView({
+  onNavigate,
+  onEditAccount,
+}: EntitlementUserViewProps) {
+  const [activeTab, setActiveTab] = React.useState<"1" | "2">("1");
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [drawerData, setDrawerData] = React.useState<any>(null);
+  const [searchTerm, setSearchTerm] = React.useState("");
+
+  const [accounts, setAccounts] = React.useState<AccountRow[]>([]);
+  const [entitlements, setEntitlements] = React.useState<EntitlementRow[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState("");
+
+  const fetchAccounts = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(
+        "http://mc.shashwat.com:69696/restService/one/aacc"
+      );
+      setAccounts(response.data.accounts || []);
+    } catch (err: any) {
+      setError("Failed to load accounts");
+    } finally {
+      setLoading(false);
     }
-
-    const payload = {
-      entitlementName,
-      description,
-      application,
-    };
-
-    console.log("Creating Entitlement with:", payload);
-
-    // Show success snackbar
-    setSnackbarMessage("Entitlement created successfully.");
-    setSnackbarSeverity("success");
-    setSnackbarOpen(true);
-
-    // Go back after short delay
-    setTimeout(() => {
-      onBack();
-    }, 2000);
   };
 
+  const fetchEntitlements = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(
+        "http://mc.shashwat.com:69696/restService/one/entity"
+      );
+      setEntitlements(response.data.entitlements || []);
+    } catch (err: any) {
+      setError("Failed to load entitlements");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    if (activeTab === "1") {
+      fetchAccounts();
+    } else {
+      fetchEntitlements();
+    }
+  }, [activeTab]);
+
+  const filteredAccounts = accounts.filter(
+    (a) =>
+      a.accountOwner?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      a.accountName?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredEntitlements = entitlements.filter((e) =>
+    e.entitlementName?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const openDrawer = (row: any) => {
+    setDrawerData(row);
+    setDrawerOpen(true);
+  };
+
+  const headCellsAccounts = [
+    { accessorKey: "accountOwner", header: "Account Owner" },
+    { accessorKey: "accountName", header: "Account Name" },
+    {
+      accessorKey: "accessRoles",
+      header: "Roles",
+      Cell: ({ cell }: any) =>
+        (cell.getValue() as { roleName: string }[])
+          .map((r) => r.roleName)
+          .join(", "),
+    },
+    {
+      accessorKey: "accountStatus",
+      header: "Status",
+      Cell: ({ cell }: any) => {
+        const value = (cell.getValue() as string)?.toLowerCase();
+        const isActive = value === "active";
+        return (
+          <span
+            style={{
+              backgroundColor: isActive ? "#2BCBC11A" : "#ff00001A",
+              color: isActive ? "#2BCBC1" : "#ff0000",
+              padding: "0.25rem 0.5rem",
+              borderRadius: "20px",
+            }}
+          >
+            {isActive ? "Enabled" : "Inactive"}
+          </span>
+        );
+      },
+    },
+    { accessorKey: "accountType", header: "Account Type" },
+  ];
+
+  const headCellsEntitlements = [
+    { accessorKey: "entitlementName", header: "Name" },
+    { accessorKey: "entitlementDescription", header: "Description" },
+    { accessorKey: "entitlementOwner", header: "Owner" },
+    { accessorKey: "isPrivileged", header: "Privileged" },
+  ];
+
   return (
-    <Box className={styles.container}>
-      <Box className={styles.header}>
-        <IconButton onClick={onBack} sx={{ color: "white" }}>
-          <ArrowBackIcon />
-        </IconButton>
-        <Typography variant="h6" sx={{ color: "white", ml: 1 }}>
-          Create Entitlement
-        </Typography>
-      </Box>
+    <div className={styles.container}>
+      <Typography
+        fontFamily="Poppins"
+        sx={{ fontWeight: 500, fontSize: 20, color: "white", marginBottom: 2 }}
+      >
+        Entitlement Users
+      </Typography>
 
-      <Box className={styles.formCard}>
-        <Typography className={styles.sectionTitle}>Entitlement Details</Typography>
+      <Tabs
+        activeKey={activeTab}
+        onChange={(key) => {
+          setActiveTab(key as "1" | "2");
+          setSearchTerm("");
+          setDrawerOpen(false);
+        }}
+        className={styles.tabs}
+      >
+        <TabPane
+          tab={
+            <span
+              style={{
+                fontWeight: 600,
+                color: activeTab === "1" ? "#007BFF" : "#8D8D8D",
+              }}
+            >
+              Accounts
+            </span>
+          }
+          key="1"
+        />
+        <TabPane
+          tab={
+            <span
+              style={{
+                fontWeight: 600,
+                color: activeTab === "2" ? "#007BFF" : "#8D8D8D",
+              }}
+            >
+              Entitlements
+            </span>
+          }
+          key="2"
+        />
+      </Tabs>
 
-        <Grid container spacing={2} sx={{ mt: 1 }}>
-          <Grid item xs={12} md={4}>
+      <div className={styles.filterSection}>
+        <Grid container alignItems="center" spacing={2} wrap="nowrap">
+          <Grid item xs={12} md={6} lg={5}>
             <TextField
-              fullWidth
+              placeholder={
+                activeTab === "1"
+                  ? "Search by owner/name"
+                  : "Search entitlement name"
+              }
               size="small"
-              label="Entitlement Name"
-              value={entitlementName}
-              onChange={(e) => setEntitlementName(e.target.value)}
-              InputProps={{ sx: { backgroundColor: "#1E252D", color: "white" } }}
-              InputLabelProps={{ sx: { color: "#CBCBCB" } }}
+              fullWidth
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: "#CBCBCB" }} />
+                  </InputAdornment>
+                ),
+                sx: {
+                  backgroundColor: "#1E252D",
+                  color: "white",
+                  borderRadius: 1,
+                },
+              }}
             />
           </Grid>
-          <Grid item xs={12} md={4}>
-            <TextField
-              fullWidth
+
+          <Grid item xs={6} md={2} lg={1}>
+            <Button
+              variant="outlined"
               size="small"
-              label="Description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              InputProps={{ sx: { backgroundColor: "#1E252D", color: "white" } }}
-              InputLabelProps={{ sx: { color: "#CBCBCB" } }}
-            />
+              sx={{
+                color: "white",
+                borderColor: "white",
+                height: 36,
+                width: "100%",
+              }}
+            >
+              Search
+            </Button>
           </Grid>
-          <Grid item xs={12} md={4}>
-            <TextField
-              fullWidth
-              size="small"
-              label="Application"
-              value={application}
-              onChange={(e) => setApplication(e.target.value)}
-              InputProps={{ sx: { backgroundColor: "#1E252D", color: "white" } }}
-              InputLabelProps={{ sx: { color: "#CBCBCB" } }}
-            />
+
+          <Grid item xs={6} md={6} lg={8} textAlign="right">
+            <Button
+              variant="contained"
+              startIcon={<AddCircleIcon />}
+              onClick={() =>
+                onNavigate?.(
+                  activeTab === "1"
+                    ? "create-account"
+                    : "create-entitlement-user"
+                )
+              }
+              sx={{ height: 36, fontWeight: 600, fontSize: 12 }}
+            >
+              {activeTab === "1" ? "Create Account" : "Create Entitlement"}
+            </Button>
           </Grid>
         </Grid>
+      </div>
 
-        <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end", gap: 2 }}>
-          <Button variant="outlined" onClick={onBack} color="inherit">
-            Cancel
-          </Button>
-          <Button variant="contained" onClick={handleSubmit}>
-            Submit
-          </Button>
-        </Box>
-      </Box>
+      <div className={styles.tableSection}>
+        {loading ? (
+          <Box sx={{ textAlign: "center", p: 4 }}>
+            <CircularProgress sx={{ color: "white" }} />
+          </Box>
+        ) : error ? (
+          <Typography sx={{ color: "red", textAlign: "center" }}>
+            {error}
+          </Typography>
+        ) : (
+          <Box
+            sx={{
+              border: "1px solid #444",
+              p: 2,
+              borderRadius: 1,
+              backgroundColor: "#1A2028",
+              mt: 2,
+            }}
+          >
+            <MaterialTable
+              tableRows={
+                activeTab === "1" ? filteredAccounts : filteredEntitlements
+              }
+              tableCols={
+                activeTab === "1" ? headCellsAccounts : headCellsEntitlements
+              }
+              totalRowCount={
+                (activeTab === "1" ? filteredAccounts : filteredEntitlements)
+                  .length
+              }
+              globalSearch={false}
+              onRowClick={(row) => openDrawer(row as any)}
+            />
+          </Box>
+        )}
+      </div>
 
-      {/* Snackbar for feedback */}
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={3000}
-        onClose={() => setSnackbarOpen(false)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      <Drawer
+        anchor="right"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        sx={{
+          "& .MuiDrawer-paper": {
+            width: 420,
+            backgroundColor: "#1A2028",
+            padding: "24px",
+            borderLeft: "1px solid #2F3A45",
+          },
+        }}
       >
-        <Alert
-          severity={snackbarSeverity}
-          onClose={() => setSnackbarOpen(false)}
-          sx={{ width: "100%" }}
-        >
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
-    </Box>
+        {drawerData ? (
+          <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+            <Typography
+              variant="h6"
+              sx={{ color: "#fff", fontWeight: 600, fontSize: "20px", mb: 1 }}
+            >
+              {drawerData.accountName || drawerData.entitlementName}
+            </Typography>
+
+            <Box sx={{ backgroundColor: "#1E252D", p: 2, borderRadius: 1 }}>
+              {drawerData.accountOwner && (
+                <>
+                  <Typography sx={{ color: "#8D8D8D", mb: 0.5 }}>
+                    Account Owner
+                  </Typography>
+                  <Typography sx={{ color: "white", mb: 1 }}>
+                    {drawerData.accountOwner}
+                  </Typography>
+                  <Typography sx={{ color: "#8D8D8D", mb: 0.5 }}>Roles</Typography>
+                  <Typography sx={{ color: "white", mb: 1 }}>
+                    {drawerData.accessRoles
+                      .map((r: any) => r.roleName)
+                      .join(", ")}
+                  </Typography>
+                  <Typography sx={{ color: "#8D8D8D", mb: 0.5 }}>Status</Typography>
+                  <Typography sx={{ color: "white", mb: 1 }}>
+                    {drawerData.accountStatus}
+                  </Typography>
+                  <Typography sx={{ color: "#8D8D8D", mb: 0.5 }}>
+                    Account Type
+                  </Typography>
+                  <Typography sx={{ color: "white", mb: 1 }}>
+                    {drawerData.accountType}
+                  </Typography>
+                </>
+              )}
+
+              {drawerData.entitlementName && (
+                <>
+                  <Typography sx={{ color: "#8D8D8D", mb: 0.5 }}>
+                    Description
+                  </Typography>
+                  <Typography sx={{ color: "white", mb: 1 }}>
+                    {drawerData.entitlementDescription}
+                  </Typography>
+                  <Typography sx={{ color: "#8D8D8D", mb: 0.5 }}>Owner</Typography>
+                  <Typography sx={{ color: "white", mb: 1 }}>
+                    {drawerData.entitlementOwner}
+                  </Typography>
+                  <Typography sx={{ color: "#8D8D8D", mb: 0.5 }}>
+                    Privileged
+                  </Typography>
+                  <Typography sx={{ color: "white", mb: 1 }}>
+                    {drawerData.isPrivileged}
+                  </Typography>
+                </>
+              )}
+            </Box>
+
+            <Box
+              sx={{
+                mt: "auto",
+                pt: 2,
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 2,
+              }}
+            >
+              <Button
+                variant="contained"
+                startIcon={<EditIcon />}
+                onClick={() =>
+                  onEditAccount &&
+                  drawerData.accountOwner &&
+                  onEditAccount(drawerData.accountOwner)
+                }
+              >
+                Edit
+              </Button>
+            </Box>
+          </Box>
+        ) : (
+          <Typography sx={{ color: "white" }}>No record selected</Typography>
+        )}
+      </Drawer>
+    </div>
   );
 }
