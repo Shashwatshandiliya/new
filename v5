@@ -1,1 +1,306 @@
+// src/components/EntitlementUserView/EditEntitlementUser.tsx
+import React, { useState, useEffect } from "react";
+import {
+  Box,
+  Button,
+  Grid,
+  TextField,
+  Typography,
+  IconButton,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl,
+  OutlinedInput,
+  Chip,
+  Snackbar,
+  Alert
+} from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import axios from "axios";
+import styles from "./CreateEntitlementUser.module.css";
 
+interface EditEntitlementUserProps {
+  accountId: string;
+  selectedApp: string;
+  onBack: () => void;
+}
+
+interface AccountDetails {
+  accountName: string;
+  accountOwner: string;
+  accountType: string;
+  accountStatus: string;
+  accountDescription: string;
+  isPrivileged: string;
+  lastLogin: string;
+  accessRoles: {
+    roleName: string;
+    entitlementName: string;
+    entitlementDescription: string;
+    entitlementOwner: string;
+    isPrivileged: string;
+  }[];
+  applicationName: string;
+}
+
+const BASE_URL = "https://uklvauems02a.uk.standardchartered.com:32447/restService/onecert/v1";
+
+export default function EditEntitlementUser({ accountId, selectedApp, onBack }: EditEntitlementUserProps) {
+  const [accountDetails, setAccountDetails] = useState<AccountDetails | null>(null);
+  const [roles, setRoles] = useState<string[]>([]);
+  const [originalRoles, setOriginalRoles] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error" | "info">("success");
+
+  useEffect(() => {
+    const fetchAccount = async () => {
+      try {
+        setLoading(true);
+        const { data } = await axios.get(
+          `${BASE_URL}/account/${encodeURIComponent(accountId)}`,
+          {
+            headers: { applicationName: selectedApp },
+          }
+        );
+
+        setAccountDetails(data);
+        const roleList = (data.accessRoles || []).map((r: any) => r.roleName);
+        setRoles(roleList);
+        setOriginalRoles(roleList);
+      } catch (err) {
+        setSnackbarMessage("Failed to fetch account details.");
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAccount();
+  }, [accountId, selectedApp]);
+
+  const handleSave = async () => {
+    if (!accountDetails) return;
+    
+    if (roles.length === 0) {
+      setSnackbarMessage("At least one role must be selected.");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+      return;
+    }
+
+    const added = roles.filter(r => !originalRoles.includes(r));
+    const removed = originalRoles.filter(r => !roles.includes(r));
+
+    if (added.length === 0 && removed.length === 0) {
+      setSnackbarMessage("No changes detected.");
+      setSnackbarSeverity("info");
+      setSnackbarOpen(true);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      // First handle removals
+      if (removed.length > 0) {
+        for (const role of removed) {
+          await axios.post(
+            `${BASE_URL}/removeEntitlement`,
+            {
+              ...accountDetails,
+              accessRoles: [{ roleName: role }]
+            },
+            { headers: { applicationName: selectedApp } }
+          );
+        }
+      }
+
+      // Then handle additions
+      if (added.length > 0) {
+        for (const role of added) {
+          await axios.post(
+            `${BASE_URL}/addEntitlement`,
+            {
+              ...accountDetails,
+              accessRoles: [{ roleName: role }]
+            },
+            { headers: { applicationName: selectedApp } }
+          );
+        }
+      }
+
+      // After successful update, get the latest account details
+      const { data } = await axios.get(
+        `${BASE_URL}/account/${encodeURIComponent(accountId)}`,
+        { headers: { applicationName: selectedApp } }
+      );
+      
+      setAccountDetails(data);
+      const updatedRoles = (data.accessRoles || []).map((r: any) => r.roleName);
+      setRoles(updatedRoles);
+      setOriginalRoles(updatedRoles);
+
+      setSnackbarMessage("Roles updated successfully.");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error("Error updating roles", error);
+      setSnackbarMessage("Failed to update roles. Please try again.");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!accountDetails) {
+    return (
+      <Box className={styles.container}>
+        <Box className={styles.header}>
+          <IconButton onClick={onBack} sx={{ color: "white" }}>
+            <ArrowBackIcon />
+          </IconButton>
+          <Typography variant="h6" sx={{ color: "white", ml: 1 }}>
+            Loading account details...
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+          <CircularProgress sx={{ color: '#2BCBC1' }} />
+        </Box>
+      </Box>
+    );
+  }
+
+  return (
+    <Box className={styles.container}>
+      <Box className={styles.header}>
+        <IconButton onClick={onBack} sx={{ color: "white" }}>
+          <ArrowBackIcon />
+        </IconButton>
+        <Typography variant="h6" sx={{ color: "white", ml: 1 }}>
+          Edit Account - {accountDetails.accountName}
+        </Typography>
+      </Box>
+
+      <Box className={styles.formCard}>
+        <Typography className={styles.sectionTitle}>Account Details</Typography>
+        <Grid container spacing={2} sx={{ mt: 1 }}>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Bank ID"
+              size="small"
+              value={accountDetails.accountOwner}
+              disabled
+              InputProps={{ sx: { backgroundColor: "#2F3A45", color: "white" } }}
+              InputLabelProps={{ sx: { color: "#CBCBCB" } }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Account Owner"
+              size="small"
+              value={accountDetails.accountOwner}
+              disabled
+              InputProps={{ sx: { backgroundColor: "#2F3A45", color: "white" } }}
+              InputLabelProps={{ sx: { color: "#CBCBCB" } }}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth size="small">
+              <InputLabel sx={{ color: "#CBCBCB" }}>Role(s)</InputLabel>
+              <Select
+                multiple
+                value={roles}
+                onChange={(e) => setRoles(e.target.value as string[])}
+                input={<OutlinedInput label="Role(s)" />}
+                renderValue={(selected) => (
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                    {selected.map((value) => (
+                      <Chip
+                        key={value}
+                        label={value}
+                        sx={{ backgroundColor: "#007BFF", color: "white" }}
+                      />
+                    ))}
+                  </Box>
+                )}
+                sx={{
+                  backgroundColor: "#1E252D",
+                  color: "white",
+                  borderRadius: 1,
+                }}
+              >
+                {Array.from(
+                  new Set([
+                    ...roles,
+                    ...(accountDetails.accessRoles?.map(r => r.roleName) || [])
+                  ])
+                ).map((role) => (
+                  <MenuItem key={role} value={role}>
+                    {role}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Account Type"
+              size="small"
+              value={accountDetails.accountType}
+              disabled
+              InputProps={{ sx: { backgroundColor: "#2F3A45", color: "white" } }}
+              InputLabelProps={{ sx: { color: "#CBCBCB" } }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Status"
+              size="small"
+              value={accountDetails.accountStatus}
+              disabled
+              InputProps={{ sx: { backgroundColor: "#2F3A45", color: "white" } }}
+              InputLabelProps={{ sx: { color: "#CBCBCB" } }}
+            />
+          </Grid>
+        </Grid>
+
+        <Box sx={{ mt: 3, display: "flex", gap: 2, justifyContent: "flex-end" }}>
+          <Button variant="outlined" color="inherit" onClick={onBack} sx={{ textTransform: "none" }}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            disabled={loading}
+            sx={{ textTransform: "none" }}
+          >
+            {loading ? "Saving..." : "Save"}
+          </Button>
+        </Box>
+      </Box>
+
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert severity={snackbarSeverity} onClose={() => setSnackbarOpen(false)} sx={{ width: "100%" }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
+    </Box>
+  );
+}
