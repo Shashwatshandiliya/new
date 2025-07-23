@@ -62,39 +62,33 @@ export default function EditEntitlementUser({ accountId, selectedApp, onBack }: 
     const fetchAccount = async () => {
       try {
         setLoading(true);
-        const { data } = await axios.get(
+        
+        // Create headers with applicationName
+        const headers = {
+          applicationName: selectedApp
+        };
+
+        // Fetch account details
+        const accountResponse = await axios.get(
           `${BASE_URL}/account/${encodeURIComponent(accountId)}`,
-          {
-            headers: { applicationName: selectedApp },
-          }
+          { headers }
         );
 
-        // If data is not found, try the entitlement endpoint
-        if (!data) {
-          const entitlementRes = await axios.get(
-            `${BASE_URL}/entitlement/${encodeURIComponent(accountId)}`,
-            { headers: { applicationName: selectedApp } }
-          );
-          setAccountDetails(entitlementRes.data);
-        } else {
-          setAccountDetails(data);
-        }
-
-        if (data) {
-          const roleList = (data.accessRoles || []).map((r: any) => r.roleName);
-          setRoles(roleList);
-          setOriginalRoles(roleList);
-          
-          // Extract all unique roles from the application
-          const allRolesResponse = await axios.get(
-            `${BASE_URL}/entitlement`,
-            { headers: { applicationName: selectedApp } }
-          );
-          const allRoles = allRolesResponse.data.entitlements.map(
-            (e: any) => e.entitlementName
-          );
-          setRoleOptions(Array.from(new Set(allRoles)));
-        }
+        setAccountDetails(accountResponse.data);
+        const roleList = (accountResponse.data.accessRoles || []).map((r: any) => r.roleName);
+        setRoles(roleList);
+        setOriginalRoles(roleList);
+        
+        // Fetch all roles for the application
+        const rolesResponse = await axios.get(
+          `${BASE_URL}/entitlement`,
+          { headers }
+        );
+        
+        const allRoles = rolesResponse.data.entitlements.map(
+          (e: any) => e.entitlementName
+        );
+        setRoleOptions(Array.from(new Set(allRoles)));
       } catch (err) {
         console.error("Error fetching account details", err);
         setSnackbarMessage("Failed to fetch account details.");
@@ -131,6 +125,11 @@ export default function EditEntitlementUser({ accountId, selectedApp, onBack }: 
     try {
       setLoading(true);
       
+      // Create headers with applicationName
+      const headers = {
+        applicationName: selectedApp
+      };
+
       // Handle removals
       if (removed.length > 0) {
         const removePayload = {
@@ -141,7 +140,7 @@ export default function EditEntitlementUser({ accountId, selectedApp, onBack }: 
         await axios.post(
           `${BASE_URL}/removeEntitlement`,
           removePayload,
-          { headers: { applicationName: selectedApp } }
+          { headers }
         );
       }
 
@@ -155,14 +154,14 @@ export default function EditEntitlementUser({ accountId, selectedApp, onBack }: 
         await axios.post(
           `${BASE_URL}/addEntitlement`,
           addPayload,
-          { headers: { applicationName: selectedApp } }
+          { headers }
         );
       }
 
       // After successful update, get the latest account details
       const { data } = await axios.get(
         `${BASE_URL}/account/${encodeURIComponent(accountId)}`,
-        { headers: { applicationName: selectedApp } }
+        { headers }
       );
       
       setAccountDetails(data);
@@ -324,49 +323,3 @@ export default function EditEntitlementUser({ accountId, selectedApp, onBack }: 
     </Box>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<Button
-  variant="contained"
-  startIcon={<EditIcon />}
-  sx={{ textTransform: "none" }}
-  onClick={() => onEditAccount?.(drawerData.accountName)}
->
-  Edit
-</Button>
