@@ -1,325 +1,274 @@
-// src/components/EntitlementUserView/EditEntitlementUser.tsx
-import React, { useState, useEffect } from "react";
-import {
-  Box,
-  Button,
-  Grid,
-  TextField,
-  Typography,
-  IconButton,
-  Select,
-  MenuItem,
-  InputLabel,
-  FormControl,
-  OutlinedInput,
-  Chip,
-  Snackbar,
-  Alert,
-  CircularProgress
-} from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import axios from "axios";
-import styles from "./CreateEntitlementUser.module.css";
+import React, { useState } from "react";
+import Sidebar from "../../components/Dashboard/Sidebar/Sidebar";
+import styles from "./Dashboard.module.css";
+import LandingDashBoard from "./LandingDashboard/LandingDashboard";
+import DataPolicyView from "../DataPolicies/DataPolicyView";
+import CreateNewPolicy from "../DataPolicies/CreateNewPolicy";
+import DataProfileView from "../DataProfile/DataProfileView";
+import CreateNewDataProfile from "../DataProfile/CreateNewDataProfile";
+import EditDataProfile from "../DataProfile/EditDataProfile";
+import EditDataPolicy from "../DataPolicies/EditDataPolicy";
+import DeleteDataProfile from "../DataProfile/DeleteDataProfile";
+import DeleteDataPolicy from "../DataPolicies/DeleteDataPolicy";
+import AppManagementview from "../AppManagement/AppManagementView";
+import CreateNewApp from "../AppManagement/CreateNewApp";
+import EditExistingApp from "../AppManagement/EditExistingApp";
+import DeleteExistingApp from "../AppManagement/DeleteExistingApp";
+import CreateNewFeature from "../AppManagement/CreateNewFeature";
+import CreateNewAction from "../AppManagement/CreateNewAction";
+import EntitlementView from "../Entitlement/EntitlementView";
+import CreateNewEntitlement from "../Entitlement/CreateNewEntitlement";
+import EditEntitlement from "../Entitlement/EditEntitlement";
+import DeleteEntitlement from "../Entitlement/DeleteEntitlement";
+import EditExistingFeature from "../AppManagement/EditExistingFeature";
+import DeleteExistingFeature from "../AppManagement/DeleteExistingFeature";
+import EditExistingAction from "../AppManagement/EditExistingAction";
+import DeleteExistingAction from "../AppManagement/DeleteExistingAction";
+import EntitlementUserView from "../EntitlementUser/EntitlementUserView";
+import CreateEntitlementUser from "../EntitlementUser/CreateEntitlementUser";
+import CreateEntitlementEntilementUser from "../EntitlementUser/CreateEntitlementEntilementUser";
+import EditEntitlementUser from "../EntitlementUser/EditEntitlementUser";
+import ReportsPageView from "../Reports/ReportsPageView";
 
-interface EditEntitlementUserProps {
-  accountId: string;
-  selectedApp: string;
-  onBack: () => void;
-}
+const Dashboard: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<String>("home");
+  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
+  const [selectedPolicyId, setSelectedPolicyId] = useState<string | null>(null);
+  const [selectedAppId, setSelctedAppId] = useState<string | null>(null);
+  const [selectedFeatureId, setSelectedFeatureId] = useState<string | null>(null);
+  const [selectedActionId, setSelectedActionId] = useState<string | null>(null);
+  const [selectedEntitlementId, setSelectedEntitlementId] = useState<string | null>(null);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+  
+  // Add state for selected application in Entitlement User view
+  const [entitlementUserApp, setEntitlementUserApp] = useState<string>("SAIL");
 
-interface AccountDetails {
-  accountName: string;
-  accountOwner: string;
-  accountType: string;
-  accountStatus: string;
-  accountDescription: string;
-  isPrivileged: string;
-  lastLogin: string;
-  accessRoles: {
-    roleName: string;
-    entitlementName: string;
-    entitlementDescription: string;
-    entitlementOwner: string;
-    isPrivileged: string;
-  }[];
-  applicationName: string;
-}
-
-const BASE_URL = "https://uklvauems02a.uk.standardchartered.com:32447/restService/onecert/v1";
-
-export default function EditEntitlementUser({ accountId, selectedApp, onBack }: EditEntitlementUserProps) {
-  const [accountDetails, setAccountDetails] = useState<AccountDetails | null>(null);
-  const [roles, setRoles] = useState<string[]>([]);
-  const [originalRoles, setOriginalRoles] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [roleOptions, setRoleOptions] = useState<string[]>([]);
-
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error" | "info">("success");
-
-  useEffect(() => {
-    const fetchAccount = async () => {
-      try {
-        setLoading(true);
-        
-        // Create headers with applicationName
-        const headers = {
-          applicationName: selectedApp
-        };
-
-        // Fetch account details
-        const accountResponse = await axios.get(
-          `${BASE_URL}/account/${encodeURIComponent(accountId)}`,
-          { headers }
-        );
-
-        setAccountDetails(accountResponse.data);
-        const roleList = (accountResponse.data.accessRoles || []).map((r: any) => r.roleName);
-        setRoles(roleList);
-        setOriginalRoles(roleList);
-        
-        // Fetch all roles for the application
-        const rolesResponse = await axios.get(
-          `${BASE_URL}/entitlement`,
-          { headers }
-        );
-        
-        const allRoles = rolesResponse.data.entitlements.map(
-          (e: any) => e.entitlementName
-        );
-        setRoleOptions(Array.from(new Set(allRoles)));
-      } catch (err) {
-        console.error("Error fetching account details", err);
-        setSnackbarMessage("Failed to fetch account details.");
-        setSnackbarSeverity("error");
-        setSnackbarOpen(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAccount();
-  }, [accountId, selectedApp]);
-
-  const handleSave = async () => {
-    if (!accountDetails) return;
-    
-    if (roles.length === 0) {
-      setSnackbarMessage("At least one role must be selected.");
-      setSnackbarSeverity("error");
-      setSnackbarOpen(true);
-      return;
-    }
-
-    const added = roles.filter(r => !originalRoles.includes(r));
-    const removed = originalRoles.filter(r => !roles.includes(r));
-
-    if (added.length === 0 && removed.length === 0) {
-      setSnackbarMessage("No changes detected.");
-      setSnackbarSeverity("info");
-      setSnackbarOpen(true);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      
-      // Create headers with applicationName
-      const headers = {
-        applicationName: selectedApp
-      };
-
-      // Handle removals
-      if (removed.length > 0) {
-        const removePayload = {
-          ...accountDetails,
-          accessRoles: removed.map(role => ({ roleName: role }))
-        };
-        
-        await axios.post(
-          `${BASE_URL}/removeEntitlement`,
-          removePayload,
-          { headers }
-        );
-      }
-
-      // Handle additions
-      if (added.length > 0) {
-        const addPayload = {
-          ...accountDetails,
-          accessRoles: added.map(role => ({ roleName: role }))
-        };
-        
-        await axios.post(
-          `${BASE_URL}/addEntitlement`,
-          addPayload,
-          { headers }
-        );
-      }
-
-      // After successful update, get the latest account details
-      const { data } = await axios.get(
-        `${BASE_URL}/account/${encodeURIComponent(accountId)}`,
-        { headers }
-      );
-      
-      setAccountDetails(data);
-      const updatedRoles = (data.accessRoles || []).map((r: any) => r.roleName);
-      setRoles(updatedRoles);
-      setOriginalRoles(updatedRoles);
-
-      setSnackbarMessage("Roles updated successfully.");
-      setSnackbarSeverity("success");
-      setSnackbarOpen(true);
-    } catch (error) {
-      console.error("Error updating roles", error);
-      setSnackbarMessage("Failed to update roles. Please try again.");
-      setSnackbarSeverity("error");
-      setSnackbarOpen(true);
-    } finally {
-      setLoading(false);
-    }
+  const handleEditProfile = (id: string) => {
+    setSelectedProfileId(id);
+    setActiveTab("edit-profile");
+  };
+  
+  const handleEditPolicy = (id: string) => {
+    setSelectedPolicyId(id);
+    setActiveTab("edit-policy");
+  };
+  
+  const handleDeletePolicy = (id: string) => {
+    setSelectedPolicyId(id);
+    setActiveTab("delete-policy");
+  };
+  
+  const handleDeleteProfile = (id: string) => {
+    setSelectedProfileId(id);
+    setActiveTab("delete-profile");
+  };
+  
+  const handleEditApp = (id: string) => {
+    setSelctedAppId(id);
+    setActiveTab("edit-app");
+  };
+  
+  const handleDeleteApp = (id: string) => {
+    setSelctedAppId(id);
+    setActiveTab("delete-app");
+  };
+  
+  const handleEditFeature = (id: string) => {
+    setSelectedFeatureId(id);
+    setActiveTab("edit-feature");
+  };
+  
+  const handleDeleteFeature = (id: string) => {
+    setSelectedFeatureId(id);
+    setActiveTab("delete-feature");
+  };
+  
+  const handleEditAction = (id: string) => {
+    setSelectedActionId(id);
+    setActiveTab("edit-action");
+  };
+  
+  const handleDeleteAction = (id: string) => {
+    setSelectedActionId(id);
+    setActiveTab("delete-action");
+  };
+  
+  const handleEditEntitlement = (id: string) => {
+    setSelectedEntitlementId(id);
+    setActiveTab("edit-entitlement");
+  };
+  
+  const handleDeleteEntitlement = (id: string) => {
+    setSelectedEntitlementId(id);
+    setActiveTab("delete-entitlement");
   };
 
-  if (!accountDetails) {
-    return (
-      <Box className={styles.container}>
-        <Box className={styles.header}>
-          <IconButton onClick={onBack} sx={{ color: "white" }}>
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ color: "white", ml: 1 }}>
-            Loading account details...
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-          <CircularProgress sx={{ color: '#2BCBC1' }} />
-        </Box>
-      </Box>
-    );
-  }
-
   return (
-    <Box className={styles.container}>
-      <Box className={styles.header}>
-        <IconButton onClick={onBack} sx={{ color: "white" }}>
-          <ArrowBackIcon />
-        </IconButton>
-        <Typography variant="h6" sx={{ color: "white", ml: 1 }}>
-          Edit Account - {accountDetails.accountName}
-        </Typography>
-      </Box>
+    <div className={styles.container}>
+      <Sidebar onNavigate={setActiveTab} />
+      {/* Content area */}
+      <div className={styles.content}>
+        {/* Content changes based on activeTab */}
+        {activeTab === "home" && <LandingDashBoard onNavigate={setActiveTab} />}
+        {activeTab === "app-management" && (
+          <AppManagementview
+            onNavigate={setActiveTab}
+            onEditApp={handleEditApp}
+            onDeleteApp={handleDeleteApp}
+            onEditFeature={handleEditFeature}
+            onDeleteFeature={handleDeleteFeature}
+            onEditAction={handleEditAction}
+            onDeleteAction={handleDeleteAction}
+          />
+        )}
+        {activeTab === "add-app" && (
+          <CreateNewApp onBack={() => setActiveTab("app-management")} />
+        )}
+        {activeTab === "edit-app" && (
+          <EditExistingApp
+            appId={selectedAppId as string | null}
+            onBack={() => setActiveTab("app-management")}
+          />
+        )}
+        {activeTab === "delete-app" && (
+          <DeleteExistingApp
+            appId={selectedAppId as string | null}
+            onBack={() => setActiveTab("app-management")}
+          />
+        )}
+        {activeTab === "add-feature" && (
+          <CreateNewFeature onBack={() => setActiveTab("app-management")} />
+        )}
+        {activeTab === "add-action" && (
+          <CreateNewAction onBack={() => setActiveTab("app-management")} />
+        )}
+        {activeTab === "edit-feature" && (
+          <EditExistingFeature
+            featureId={selectedFeatureId}
+            onBack={() => setActiveTab("app-management")}
+          />
+        )}
+        {activeTab === "delete-feature" && (
+          <DeleteExistingFeature
+            featureId={selectedFeatureId}
+            onBack={() => setActiveTab("app-management")}
+          />
+        )}
+        {activeTab === "edit-action" && (
+          <EditExistingAction
+            actionId={selectedActionId}
+            onBack={() => setActiveTab("app-management")}
+          />
+        )}
+        {activeTab === "delete-action" && (
+          <DeleteExistingAction
+            actionId={selectedActionId}
+            onBack={() => setActiveTab("app-management")}
+          />
+        )}
+        {activeTab === "data-policies" && (
+          <DataPolicyView
+            onDeletePolicy={handleDeletePolicy}
+            onNewPolicy={() => setActiveTab("create-policy")}
+            onEditPolicy={handleEditPolicy}
+          />
+        )}
+        {activeTab === "create-policy" && (
+          <CreateNewPolicy onBack={() => setActiveTab("data-policies")} />
+        )}
+        {activeTab === "edit-policy" && (
+          <EditDataPolicy
+            policyId={selectedPolicyId as string | null}
+            onBack={() => setActiveTab("data-policies")}
+          />
+        )}
+        {activeTab === "delete-policy" && (
+          <DeleteDataPolicy
+            policyId={selectedPolicyId as string | null}
+            onBack={() => setActiveTab("data-policies")}
+          />
+        )}
+        {activeTab === "data-profiles" && (
+          <DataProfileView
+            onDeleteProfile={handleDeleteProfile}
+            onNewProfile={() => setActiveTab("create-profile")}
+            onEditProfile={handleEditProfile}
+          />
+        )}
+        {activeTab === "create-profile" && (
+          <CreateNewDataProfile onBack={() => setActiveTab("data-profiles")} />
+        )}
+        {activeTab === "edit-profile" && (
+          <EditDataProfile
+            profileId={selectedProfileId as string | null}
+            onBack={() => setActiveTab("data-profiles")}
+          />
+        )}
+        {activeTab === "delete-profile" && (
+          <DeleteDataProfile
+            profileId={selectedProfileId as string | null}
+            onBack={() => setActiveTab("data-profiles")}
+          />
+        )}
+        {activeTab === "entitlements" && (
+          <EntitlementView
+            onNewEntitlement={() => setActiveTab("create-entitlement")}
+            onEditEntitlement={handleEditEntitlement}
+            onDeleteEntitlement={handleDeleteEntitlement}
+          />
+        )}
+        {activeTab === "edit-entitlement" && (
+          <EditEntitlement
+            entitlementId={selectedEntitlementId as string | null}
+            onBack={() => setActiveTab("entitlements")}
+          />
+        )}
+        {activeTab === "delete-entitlement" && (
+          <DeleteEntitlement
+            entitlementId={selectedEntitlementId as string | null}
+            onBack={() => setActiveTab("entitlements")}
+          />
+        )}
+        {activeTab === "create-entitlement" && (
+          <CreateNewEntitlement onBack={() => setActiveTab("entitlements")} />
+        )}
 
-      <Box className={styles.formCard}>
-        <Typography className={styles.sectionTitle}>Account Details</Typography>
-        <Grid container spacing={2} sx={{ mt: 1 }}>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Bank ID"
-              size="small"
-              value={accountDetails.accountOwner}
-              disabled
-              InputProps={{ sx: { backgroundColor: "#2F3A45", color: "white" } }}
-              InputLabelProps={{ sx: { color: "#CBCBCB" } }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Account Name"
-              size="small"
-              value={accountDetails.accountName}
-              disabled
-              InputProps={{ sx: { backgroundColor: "#2F3A45", color: "white" } }}
-              InputLabelProps={{ sx: { color: "#CBCBCB" } }}
-            />
-          </Grid>
+        {activeTab === "create-account" && (
+          <CreateEntitlementUser
+            onBack={() => setActiveTab("entitlement-users")}
+          />
+        )}
+        {activeTab === "create-entitlement-user" && (
+          <CreateEntitlementEntilementUser
+            onBack={() => setActiveTab("entitlement-users")}
+          />
+        )}
+        {activeTab === "entitlement-users" && (
+          <EntitlementUserView
+            onNavigate={setActiveTab}
+            onEditAccount={(id: string) => {
+              setSelectedAccountId(id);
+              setActiveTab("edit-account");
+            }}
+            // Pass the selected app and setter
+            selectedApp={entitlementUserApp}
+            setSelectedApp={setEntitlementUserApp}
+          />
+        )}
 
-          <Grid item xs={12}>
-            <FormControl fullWidth size="small">
-              <InputLabel sx={{ color: "#CBCBCB" }}>Role(s)</InputLabel>
-              <Select
-                multiple
-                value={roles}
-                onChange={(e) => setRoles(e.target.value as string[])}
-                input={<OutlinedInput label="Role(s)" />}
-                renderValue={(selected) => (
-                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                    {selected.map((value) => (
-                      <Chip
-                        key={value}
-                        label={value}
-                        sx={{ backgroundColor: "#007BFF", color: "white" }}
-                      />
-                    ))}
-                  </Box>
-                )}
-                sx={{
-                  backgroundColor: "#1E252D",
-                  color: "white",
-                  borderRadius: 1,
-                }}
-              >
-                {roleOptions.map((role) => (
-                  <MenuItem key={role} value={role}>
-                    {role}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
+        {activeTab === "edit-account" && selectedAccountId && (
+          <EditEntitlementUser
+            accountId={selectedAccountId}
+            // Use the correct selected app
+            selectedApp={entitlementUserApp}
+            onBack={() => setActiveTab("entitlement-users")}
+          />
+        )}
 
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Account Type"
-              size="small"
-              value={accountDetails.accountType}
-              disabled
-              InputProps={{ sx: { backgroundColor: "#2F3A45", color: "white" } }}
-              InputLabelProps={{ sx: { color: "#CBCBCB" } }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Status"
-              size="small"
-              value={accountDetails.accountStatus}
-              disabled
-              InputProps={{ sx: { backgroundColor: "#2F3A45", color: "white" } }}
-              InputLabelProps={{ sx: { color: "#CBCBCB" } }}
-            />
-          </Grid>
-        </Grid>
-
-        <Box sx={{ mt: 3, display: "flex", gap: 2, justifyContent: "flex-end" }}>
-          <Button variant="outlined" color="inherit" onClick={onBack} sx={{ textTransform: "none" }}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleSave}
-            disabled={loading}
-            sx={{ textTransform: "none" }}
-          >
-            {loading ? "Saving..." : "Save"}
-          </Button>
-        </Box>
-      </Box>
-
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={3000}
-        onClose={() => setSnackbarOpen(false)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert severity={snackbarSeverity} onClose={() => setSnackbarOpen(false)} sx={{ width: "100%" }}>
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
-    </Box>
+        {activeTab === "reports-page" && <ReportsPageView />}
+      </div>
+    </div>
   );
-}
+};
+
+export default Dashboard;
