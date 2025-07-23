@@ -14,7 +14,8 @@ import {
   OutlinedInput,
   Chip,
   Snackbar,
-  Alert
+  Alert,
+  CircularProgress
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import axios from "axios";
@@ -51,6 +52,7 @@ export default function EditEntitlementUser({ accountId, selectedApp, onBack }: 
   const [roles, setRoles] = useState<string[]>([]);
   const [originalRoles, setOriginalRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [roleOptions, setRoleOptions] = useState<string[]>([]);
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -67,11 +69,34 @@ export default function EditEntitlementUser({ accountId, selectedApp, onBack }: 
           }
         );
 
-        setAccountDetails(data);
-        const roleList = (data.accessRoles || []).map((r: any) => r.roleName);
-        setRoles(roleList);
-        setOriginalRoles(roleList);
+        // If data is not found, try the entitlement endpoint
+        if (!data) {
+          const entitlementRes = await axios.get(
+            `${BASE_URL}/entitlement/${encodeURIComponent(accountId)}`,
+            { headers: { applicationName: selectedApp } }
+          );
+          setAccountDetails(entitlementRes.data);
+        } else {
+          setAccountDetails(data);
+        }
+
+        if (data) {
+          const roleList = (data.accessRoles || []).map((r: any) => r.roleName);
+          setRoles(roleList);
+          setOriginalRoles(roleList);
+          
+          // Extract all unique roles from the application
+          const allRolesResponse = await axios.get(
+            `${BASE_URL}/entitlement`,
+            { headers: { applicationName: selectedApp } }
+          );
+          const allRoles = allRolesResponse.data.entitlements.map(
+            (e: any) => e.entitlementName
+          );
+          setRoleOptions(Array.from(new Set(allRoles)));
+        }
       } catch (err) {
+        console.error("Error fetching account details", err);
         setSnackbarMessage("Failed to fetch account details.");
         setSnackbarSeverity("error");
         setSnackbarOpen(true);
@@ -106,32 +131,32 @@ export default function EditEntitlementUser({ accountId, selectedApp, onBack }: 
     try {
       setLoading(true);
       
-      // First handle removals
+      // Handle removals
       if (removed.length > 0) {
-        for (const role of removed) {
-          await axios.post(
-            `${BASE_URL}/removeEntitlement`,
-            {
-              ...accountDetails,
-              accessRoles: [{ roleName: role }]
-            },
-            { headers: { applicationName: selectedApp } }
-          );
-        }
+        const removePayload = {
+          ...accountDetails,
+          accessRoles: removed.map(role => ({ roleName: role }))
+        };
+        
+        await axios.post(
+          `${BASE_URL}/removeEntitlement`,
+          removePayload,
+          { headers: { applicationName: selectedApp } }
+        );
       }
 
-      // Then handle additions
+      // Handle additions
       if (added.length > 0) {
-        for (const role of added) {
-          await axios.post(
-            `${BASE_URL}/addEntitlement`,
-            {
-              ...accountDetails,
-              accessRoles: [{ roleName: role }]
-            },
-            { headers: { applicationName: selectedApp } }
-          );
-        }
+        const addPayload = {
+          ...accountDetails,
+          accessRoles: added.map(role => ({ roleName: role }))
+        };
+        
+        await axios.post(
+          `${BASE_URL}/addEntitlement`,
+          addPayload,
+          { headers: { applicationName: selectedApp } }
+        );
       }
 
       // After successful update, get the latest account details
@@ -204,16 +229,16 @@ export default function EditEntitlementUser({ accountId, selectedApp, onBack }: 
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
-              label="Account Owner"
+              label="Account Name"
               size="small"
-              value={accountDetails.accountOwner}
+              value={accountDetails.accountName}
               disabled
               InputProps={{ sx: { backgroundColor: "#2F3A45", color: "white" } }}
               InputLabelProps={{ sx: { color: "#CBCBCB" } }}
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12}>
             <FormControl fullWidth size="small">
               <InputLabel sx={{ color: "#CBCBCB" }}>Role(s)</InputLabel>
               <Select
@@ -238,12 +263,7 @@ export default function EditEntitlementUser({ accountId, selectedApp, onBack }: 
                   borderRadius: 1,
                 }}
               >
-                {Array.from(
-                  new Set([
-                    ...roles,
-                    ...(accountDetails.accessRoles?.map(r => r.roleName) || [])
-                  ])
-                ).map((role) => (
+                {roleOptions.map((role) => (
                   <MenuItem key={role} value={role}>
                     {role}
                   </MenuItem>
@@ -304,3 +324,49 @@ export default function EditEntitlementUser({ accountId, selectedApp, onBack }: 
     </Box>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<Button
+  variant="contained"
+  startIcon={<EditIcon />}
+  sx={{ textTransform: "none" }}
+  onClick={() => onEditAccount?.(drawerData.accountName)}
+>
+  Edit
+</Button>
