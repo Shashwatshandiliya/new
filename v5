@@ -1,274 +1,406 @@
-import React, { useState } from "react";
-import Sidebar from "../../components/Dashboard/Sidebar/Sidebar";
-import styles from "./Dashboard.module.css";
-import LandingDashBoard from "./LandingDashboard/LandingDashboard";
-import DataPolicyView from "../DataPolicies/DataPolicyView";
-import CreateNewPolicy from "../DataPolicies/CreateNewPolicy";
-import DataProfileView from "../DataProfile/DataProfileView";
-import CreateNewDataProfile from "../DataProfile/CreateNewDataProfile";
-import EditDataProfile from "../DataProfile/EditDataProfile";
-import EditDataPolicy from "../DataPolicies/EditDataPolicy";
-import DeleteDataProfile from "../DataProfile/DeleteDataProfile";
-import DeleteDataPolicy from "../DataPolicies/DeleteDataPolicy";
-import AppManagementview from "../AppManagement/AppManagementView";
-import CreateNewApp from "../AppManagement/CreateNewApp";
-import EditExistingApp from "../AppManagement/EditExistingApp";
-import DeleteExistingApp from "../AppManagement/DeleteExistingApp";
-import CreateNewFeature from "../AppManagement/CreateNewFeature";
-import CreateNewAction from "../AppManagement/CreateNewAction";
-import EntitlementView from "../Entitlement/EntitlementView";
-import CreateNewEntitlement from "../Entitlement/CreateNewEntitlement";
-import EditEntitlement from "../Entitlement/EditEntitlement";
-import DeleteEntitlement from "../Entitlement/DeleteEntitlement";
-import EditExistingFeature from "../AppManagement/EditExistingFeature";
-import DeleteExistingFeature from "../AppManagement/DeleteExistingFeature";
-import EditExistingAction from "../AppManagement/EditExistingAction";
-import DeleteExistingAction from "../AppManagement/DeleteExistingAction";
-import EntitlementUserView from "../EntitlementUser/EntitlementUserView";
-import CreateEntitlementUser from "../EntitlementUser/CreateEntitlementUser";
-import CreateEntitlementEntilementUser from "../EntitlementUser/CreateEntitlementEntilementUser";
-import EditEntitlementUser from "../EntitlementUser/EditEntitlementUser";
-import ReportsPageView from "../Reports/ReportsPageView";
+import React, { useState, useEffect } from "react";
+import {
+  Box,
+  Button,
+  Grid,
+  IconButton,
+  MenuItem,
+  Select,
+  TextField,
+  Typography,
+  SelectChangeEvent,
+  OutlinedInput,
+  Chip,
+  Snackbar,
+  Alert,
+  FormControl,
+  InputLabel,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  CircularProgress,
+} from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import styles from "./CreateEntitlementUser.module.css";
+import { Service } from "../../../Root/import";
+import { ContainerProvider } from "../../../Root/import";
 
-const Dashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<String>("home");
-  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
-  const [selectedPolicyId, setSelectedPolicyId] = useState<string | null>(null);
-  const [selectedAppId, setSelctedAppId] = useState<string | null>(null);
-  const [selectedFeatureId, setSelectedFeatureId] = useState<string | null>(null);
-  const [selectedActionId, setSelectedActionId] = useState<string | null>(null);
-  const [selectedEntitlementId, setSelectedEntitlementId] = useState<string | null>(null);
-  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
-  
-  // Add state for selected application in Entitlement User view
-  const [entitlementUserApp, setEntitlementUserApp] = useState<string>("SAIL");
+interface CreateEntitlementUserProps {
+  onBack: () => void;
+}
 
-  const handleEditProfile = (id: string) => {
-    setSelectedProfileId(id);
-    setActiveTab("edit-profile");
+const accountTypes = ["User", "System"];
+const statusOptions = ["Active", "Inactive"];
+
+export default function CreateEntitlementUser({ onBack }: CreateEntitlementUserProps) {
+  const [bankId, setBankId] = useState("");
+  const [owner, setOwner] = useState("");
+  const [roles, setRoles] = useState<string[]>([]);
+  const [availableRoles, setAvailableRoles] = useState<string[]>([]);
+  const [accountType, setAccountType] = useState("");
+  const [status, setStatus] = useState("");
+  const [appName, setAppName] = useState("");
+  const [appOptions, setAppOptions] = useState<string[]>([]);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
+  const [checkingUser, setCheckingUser] = useState(false);
+  const [userHasEntitlements, setUserHasEntitlements] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [ContainerStore] = ContainerProvider.useContext();
+  const userId = ContainerStore?.user?.userId;
+
+  useEffect(() => {
+    Service.getService("/fmces/p00/fmces/v1/application/all", {
+      headers: { user_id: userId, access_token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJ1c2VyX25hbWUiOiIyMDAyMTM1Iiwic2NvcGUiOlsiYXV0aGVudGljYXRpb24iXSwiaXNzIjoiZm1hYSIsImV4cCI6MTc1NTk0ODkxOCwiY2xpZW50X2lkIjoiMjAwMjEzNSIsImF1dGhvcml0aWVzIjpbIm9hdXRoMiJdLCJqdGkiOiI4MWJjZDNiNi00ZTU3LTQ5M2YtYjE1NC1hOGEwOWVmOGI5NDEifQ.awfDsU8u6lDUoBPHLsD9t-pCBFwmxtddaWQtZB276j2enhic8a1iz2KBpqs3a3kGmV8ZrhhcT595uXnDWPjsrL6kdtnCfIPyV6CMR-IOWXqksj7NooZ9eUCrpHdm56LVU33DBA_lkZLjPp48YC09npj4202m-OQQrJOCaPFfv9KNdkc9Fg1OPSOLdxQqRjymA2H64Jq1uv3BWe1qA6EqAMCoNsFiALTS-NVWW_CJlGPHL2ZSJXupDltCxaov9CXqO04PBaUWV_EDdsIyasobcQ-GSGiOAYR5LHjKRsX7yzu5gVtCkn7CuslBdsNprCGdvho7f5x7eIqQWfT0RmVc2g" },
+    })
+      .then(res => setAppOptions(res.data.map((a: any) => a.appName)))
+      .catch((err) => {
+        console.error(err);
+        setAppOptions([]);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (appName) {
+      Service.getService("/fmces/p00/restService/onecert/v1/entitlement", {
+        headers: { 
+          applicationName: appName,
+          user_id: userId, 
+          access_token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJ1c2VyX25hbWUiOiIyMDAyMTM1Iiwic2NvcGUiOlsiYXV0aGVudGljYXRpb24iXWSiaXNzIjoiZm1hYSIsImV4cCI6MTc1NTk0ODkxOCwiY2xpZW50X2lkIjoiMjAwMjEzNSIsImF1dGhvcml0aWVzIjpbIm9hdXRoMiJdLCJqdGkiOiI4MWJjZDNiNi00ZTU3LTQ5M2YtYjE1NC1hOGEwOWVmOGI5NDEifQ.awfDsU8u6lDUoBPHLsD9t-pCBFwmxtddaWQtZB276j2enhic8a1iz2KBpqs3a3kGmV8ZrhhcT595uXnDWPjsrL6kdtnCfIPyV6CMR-IOWXqksj7NooZ9eUCrpHdm56LVU33DBA_lkZLjPp48YC09npj4202m-OQQrJOCaPFfv9KNdkc9Fg1OPSOLdxQqRjymA2H64Jq1uv3BWe1qA6EqAMCoNsFiALTS-NVWW_CJlGPHL2ZSJXupDltCxaov9CXqO04PBaUWV_EDdsIyasobcQ-GSGiOAYR5LHjKRsX7yzu5gVtCkn7CuslBdsNprCGdvho7f5x7eIqQWfT0RmVc2g"
+        },
+      })
+      .then(res => setAvailableRoles((res.data?.entitlements || []).map((e: any) => e.entitlementName)))
+      .catch((err) => {
+        console.error(err);
+        setAvailableRoles([]);
+      });
+    }
+  }, [appName]);
+
+  const checkUserEntitlements = async (userId: string) => {
+    setCheckingUser(true);
+    try {
+      const response = await Service.getService(
+        `/fmces/v1/entitlement/user/${userId}`,
+        {
+          headers: { 
+            user_id: userId, 
+            access_token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJ1c2VyX25hbWUiOiIyMDAyMTM1Iiwic2NvcGUiOlsiYXV0aGVudGljYXRpb24iXWSiaXNzIjoiZm1hYSIsImV4cCI6MTc1NTk0ODkxOCwiY2xpZW50X2lkIjoiMjAwMjEzNSIsImF1dGhvcml0aWVzIjpbIm9hdXRoMiJdLCJqdGkiOiI4MWJjZDNiNi00ZTU3LTQ5M2YtYjE1NC1hOGEwOWVmOGI5NDEifQ.awfDsU8u6lDUoBPHLsD9t-pCBFwmxtddaWQtZB276j2enhic8a1iz2KBpqs3a3kGmV8ZrhhcT595uXnDWPjsrL6kdtnCfIPyV6CMR-IOWXqksj7NooZ9eUCrpHdm56LVU33DBA_lkZLjPp48YC09npj4202m-OQQrJOCaPFfv9KNdkc9Fg1OPSOLdxQqRjymA2H64Jq1uv3BWe1qA6EqAMCoNsFiALTS-NVWW_CJlGPHL2ZSJXupDltCxaov9CXqO04PBaUWV_EDdsIyasobcQ-GSGiOAYR5LHjKRsX7yzu5gVtCkn7CuslBdsNprCGdvho7f5x7eIqQWfT0RmVc2g"
+          },
+        }
+      );
+      
+      // If we get a response with data, user has entitlements
+      if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+        setUserHasEntitlements(true);
+        setConfirmDialogOpen(true);
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      // If we get a 404 error, user doesn't have entitlements
+      if (error.response && error.response.status === 404) {
+        setUserHasEntitlements(false);
+        return false;
+      }
+      
+      // For other errors, show a message
+      setSnackbarMessage("Error checking user entitlements. Please try again.");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+      return false;
+    } finally {
+      setCheckingUser(false);
+    }
   };
-  
-  const handleEditPolicy = (id: string) => {
-    setSelectedPolicyId(id);
-    setActiveTab("edit-policy");
+
+  const handleSubmit = async () => {
+    if (!bankId || !owner || roles.length === 0 || !accountType || !status || !appName) {
+      setSnackbarMessage("Please fill all fields and select at least one role.");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+      return;
+    }
+
+    // First check if user already has entitlements
+    const hasEntitlements = await checkUserEntitlements(bankId);
+    
+    // If user doesn't have entitlements, proceed with createAccount
+    if (!hasEntitlements) {
+      await createAccount();
+    }
+    // If user has entitlements, the confirmation dialog will handle the next step
   };
-  
-  const handleDeletePolicy = (id: string) => {
-    setSelectedPolicyId(id);
-    setActiveTab("delete-policy");
+
+  const createAccount = async () => {
+    try {
+      await Service.postService(
+        "/fmces/p00/restService/onecert/v1/createAccount",
+        {
+          accountName: bankId,
+          accountOwner: owner,
+          accountType,
+          accountStatus: status,
+          accountDescription: "",
+          isPrivileged: "No",
+          lastLogin: new Date().toISOString(),
+          applicationName: appName,
+          accessRoles: roles.map((role) => ({
+            roleName: role,
+            entitlementName: role,
+            entitlementDescription: "Auto-generated",
+            entitlementOwner: owner,
+            isPrivileged: "No",
+          })),
+        },
+        {
+          headers: { 
+            applicationName: appName, 
+            user_id: userId,
+            access_token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJ1c2VyX25hbWUiOiIyMDAyMTM1Iiwic2NvcGUiOlsiYXV0aGVudGljYXRpb24iXWSiaXNzIjoiZm1hYSIsImV4cCI6MTc1NTk0ODkxOCwiY2xpZW50X2lkIjoiMjAwMjEzNSIsImF1dGhvcml0aWVzIjpbIm9hdXhoMiJdLCJqdGkiOiI4MWJjZDNiNi00ZTU3LTQ5M2YtYjE1NC1hOGEwOWVmOGI5NDEifQ.awfDsU8u6lDUoBPHLsD9t-pCBFwmxtddaWQtZB276j2enhic8a1iz2KBpqs3a3kGmV8ZrhhcT595uXnDWPjsrL6kdtnCfIPyV6CMR-IOWXqksj7NooZ9eUCrpHdm56LVU33DBA_lkZLjPp48YC09npj4202m-OQQrJOCaPFfv9KNdkc9Fg1OPSOLdxQqRjymA2H64Jq1uv3BWe1qA6EqAMCoNsFiALTS-NVWW_CJlGPHL2ZSJXupDltCxaov9CXqO04PBaUWV_EDdsIyasobcQ-GSGiOAYR5LHjKRsX7yzu5gVtCkn7CuslBdsNprCGdvho7f5x7eIqQWfT0RmVc2g"
+          },
+        }
+      );
+
+      setSnackbarMessage("Entitlement User created successfully.");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+      resetForm();
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.statusMessage || "Failed to create user. Please try again.";
+      setSnackbarMessage(errorMessage);
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    }
   };
-  
-  const handleDeleteProfile = (id: string) => {
-    setSelectedProfileId(id);
-    setActiveTab("delete-profile");
+
+  const addEntitlement = async () => {
+    try {
+      await Service.postService(
+        "/fmces/p00/restService/onecert/v1/addEntitlement",
+        {
+          accountName: bankId,
+          accountOwner: owner,
+          accountType,
+          accountStatus: status,
+          accountDescription: "",
+          isPrivileged: "No",
+          lastLogin: new Date().toISOString(),
+          applicationName: appName,
+          accessRoles: roles.map((role) => ({
+            roleName: role,
+            entitlementName: role,
+            entitlementDescription: "Auto-generated",
+            entitlementOwner: owner,
+            isPrivilemed: "No",
+          })),
+        },
+        {
+          headers: { 
+            applicationName: appName, 
+            user_id: userId,
+            access_token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJ1c2VyX25hbWUiOiIyMDAyMTM1Iiwic2NvcGUiOlsiYXV0aGVudGljYXRpb24iXWSiaXNzIjoiZm1hYSIsImV4cCI6MTc1NTk0ODkxOCwiY2xpZW50X2lkIjoiMjAwMjEzNSIsImF1dGhvcml0aWVzIjpbIm9hdXhoMiJdLCJqdGkiOiI4MWJjZDNiNi00ZTU3LTQ5M2YtYjE1NC1hOGEwOWVmOGI5NDEifQ.awfDsU8u6lDUoBPHLsD9t-pCBFwmxtddaWQtZB276j2enhic8a1iz2KBpqs3a3kGmV8ZrhhcT595uXnDWPjsrL6kdtnCfIPyV6CMR-IOWXqksj7NooZ9eUCrpHdm56LVU33DBA_lkZLjPp48YC09npj4202m-OQQrJOCaPFfv9KNdkc9Fg1OPSOLdxQqRjymA2H64Jq1uv3BWe1qA6EqAMCoNsFiALTS-NVWW_CJlGPHL2ZSJXupDltCxaov9CXqO04PBaUWV_EDdsIyasobcQ-GSGiOAYR5LHjKRsX7yzu5gVtCkn7CuslBdsNprCGdvho7f5x7eIqQWfT0RmVc2g"
+          },
+        }
+      );
+
+      setSnackbarMessage("Entitlement added to existing user successfully.");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+      resetForm();
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.statusMessage || "Failed to add entitlement. Please try again.";
+      setSnackbarMessage(errorMessage);
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    }
   };
-  
-  const handleEditApp = (id: string) => {
-    setSelctedAppId(id);
-    setActiveTab("edit-app");
+
+  const resetForm = () => {
+    setBankId("");
+    setOwner("");
+    setRoles([]);
+    setAccountType("");
+    setStatus("");
+    setAppName("");
+    setUserHasEntitlements(false);
   };
-  
-  const handleDeleteApp = (id: string) => {
-    setSelctedAppId(id);
-    setActiveTab("delete-app");
-  };
-  
-  const handleEditFeature = (id: string) => {
-    setSelectedFeatureId(id);
-    setActiveTab("edit-feature");
-  };
-  
-  const handleDeleteFeature = (id: string) => {
-    setSelectedFeatureId(id);
-    setActiveTab("delete-feature");
-  };
-  
-  const handleEditAction = (id: string) => {
-    setSelectedActionId(id);
-    setActiveTab("edit-action");
-  };
-  
-  const handleDeleteAction = (id: string) => {
-    setSelectedActionId(id);
-    setActiveTab("delete-action");
-  };
-  
-  const handleEditEntitlement = (id: string) => {
-    setSelectedEntitlementId(id);
-    setActiveTab("edit-entitlement");
-  };
-  
-  const handleDeleteEntitlement = (id: string) => {
-    setSelectedEntitlementId(id);
-    setActiveTab("delete-entitlement");
+
+  const handleConfirmAddEntitlement = () => {
+    setConfirmDialogOpen(false);
+    addEntitlement();
   };
 
   return (
-    <div className={styles.container}>
-      <Sidebar onNavigate={setActiveTab} />
-      {/* Content area */}
-      <div className={styles.content}>
-        {/* Content changes based on activeTab */}
-        {activeTab === "home" && <LandingDashBoard onNavigate={setActiveTab} />}
-        {activeTab === "app-management" && (
-          <AppManagementview
-            onNavigate={setActiveTab}
-            onEditApp={handleEditApp}
-            onDeleteApp={handleDeleteApp}
-            onEditFeature={handleEditFeature}
-            onDeleteFeature={handleDeleteFeature}
-            onEditAction={handleEditAction}
-            onDeleteAction={handleDeleteAction}
-          />
-        )}
-        {activeTab === "add-app" && (
-          <CreateNewApp onBack={() => setActiveTab("app-management")} />
-        )}
-        {activeTab === "edit-app" && (
-          <EditExistingApp
-            appId={selectedAppId as string | null}
-            onBack={() => setActiveTab("app-management")}
-          />
-        )}
-        {activeTab === "delete-app" && (
-          <DeleteExistingApp
-            appId={selectedAppId as string | null}
-            onBack={() => setActiveTab("app-management")}
-          />
-        )}
-        {activeTab === "add-feature" && (
-          <CreateNewFeature onBack={() => setActiveTab("app-management")} />
-        )}
-        {activeTab === "add-action" && (
-          <CreateNewAction onBack={() => setActiveTab("app-management")} />
-        )}
-        {activeTab === "edit-feature" && (
-          <EditExistingFeature
-            featureId={selectedFeatureId}
-            onBack={() => setActiveTab("app-management")}
-          />
-        )}
-        {activeTab === "delete-feature" && (
-          <DeleteExistingFeature
-            featureId={selectedFeatureId}
-            onBack={() => setActiveTab("app-management")}
-          />
-        )}
-        {activeTab === "edit-action" && (
-          <EditExistingAction
-            actionId={selectedActionId}
-            onBack={() => setActiveTab("app-management")}
-          />
-        )}
-        {activeTab === "delete-action" && (
-          <DeleteExistingAction
-            actionId={selectedActionId}
-            onBack={() => setActiveTab("app-management")}
-          />
-        )}
-        {activeTab === "data-policies" && (
-          <DataPolicyView
-            onDeletePolicy={handleDeletePolicy}
-            onNewPolicy={() => setActiveTab("create-policy")}
-            onEditPolicy={handleEditPolicy}
-          />
-        )}
-        {activeTab === "create-policy" && (
-          <CreateNewPolicy onBack={() => setActiveTab("data-policies")} />
-        )}
-        {activeTab === "edit-policy" && (
-          <EditDataPolicy
-            policyId={selectedPolicyId as string | null}
-            onBack={() => setActiveTab("data-policies")}
-          />
-        )}
-        {activeTab === "delete-policy" && (
-          <DeleteDataPolicy
-            policyId={selectedPolicyId as string | null}
-            onBack={() => setActiveTab("data-policies")}
-          />
-        )}
-        {activeTab === "data-profiles" && (
-          <DataProfileView
-            onDeleteProfile={handleDeleteProfile}
-            onNewProfile={() => setActiveTab("create-profile")}
-            onEditProfile={handleEditProfile}
-          />
-        )}
-        {activeTab === "create-profile" && (
-          <CreateNewDataProfile onBack={() => setActiveTab("data-profiles")} />
-        )}
-        {activeTab === "edit-profile" && (
-          <EditDataProfile
-            profileId={selectedProfileId as string | null}
-            onBack={() => setActiveTab("data-profiles")}
-          />
-        )}
-        {activeTab === "delete-profile" && (
-          <DeleteDataProfile
-            profileId={selectedProfileId as string | null}
-            onBack={() => setActiveTab("data-profiles")}
-          />
-        )}
-        {activeTab === "entitlements" && (
-          <EntitlementView
-            onNewEntitlement={() => setActiveTab("create-entitlement")}
-            onEditEntitlement={handleEditEntitlement}
-            onDeleteEntitlement={handleDeleteEntitlement}
-          />
-        )}
-        {activeTab === "edit-entitlement" && (
-          <EditEntitlement
-            entitlementId={selectedEntitlementId as string | null}
-            onBack={() => setActiveTab("entitlements")}
-          />
-        )}
-        {activeTab === "delete-entitlement" && (
-          <DeleteEntitlement
-            entitlementId={selectedEntitlementId as string | null}
-            onBack={() => setActiveTab("entitlements")}
-          />
-        )}
-        {activeTab === "create-entitlement" && (
-          <CreateNewEntitlement onBack={() => setActiveTab("entitlements")} />
-        )}
+    <Box className={styles.container}>
+      <Box className={styles.header}>
+        <IconButton onClick={onBack} sx={{ color: "white" }}>
+          <ArrowBackIcon />
+        </IconButton>
+        <Typography variant="h6" sx={{ color: "white", ml: 1 }}>
+          Create Account
+        </Typography>
+      </Box>
 
-        {activeTab === "create-account" && (
-          <CreateEntitlementUser
-            onBack={() => setActiveTab("entitlement-users")}
-          />
-        )}
-        {activeTab === "create-entitlement-user" && (
-          <CreateEntitlementEntilementUser
-            onBack={() => setActiveTab("entitlement-users")}
-          />
-        )}
-        {activeTab === "entitlement-users" && (
-          <EntitlementUserView
-            onNavigate={setActiveTab}
-            onEditAccount={(id: string) => {
-              setSelectedAccountId(id);
-              setActiveTab("edit-account");
-            }}
-            // Pass the selected app and setter
-            selectedApp={entitlementUserApp}
-            setSelectedApp={setEntitlementUserApp}
-          />
-        )}
+      <Box className={styles.formCard}>
+        <Typography className={styles.sectionTitle}>Account Details</Typography>
 
-        {activeTab === "edit-account" && selectedAccountId && (
-          <EditEntitlementUser
-            accountId={selectedAccountId}
-            // Use the correct selected app
-            selectedApp={entitlementUserApp}
-            onBack={() => setActiveTab("entitlement-users")}
-          />
-        )}
+        <Grid container spacing={2} sx={{ mt: 1 }}>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              variant="outlined"
+              label="Bank ID"
+              size="small"
+              value={bankId}
+              onChange={(e) => setBankId(e.target.value)}
+              InputProps={{ sx: { backgroundColor: "#1E252D", color: "white" } }}
+              InputLabelProps={{ sx: { color: "#CBCBCB" } }}
+            />
+          </Grid>
 
-        {activeTab === "reports-page" && <ReportsPageView />}
-      </div>
-    </div>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              variant="outlined"
+              label="Account Owner"
+              size="small"
+              value={owner}
+              onChange={(e) => setOwner(e.target.value)}
+              InputProps={{ sx: { backgroundColor: "#1E252D", color: "white" } }}
+              InputLabelProps={{ sx: { color: "#CBCBCB" } }}
+            />
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <Select
+              fullWidth
+              displayEmpty
+              size="small"
+              value={appName}
+              onChange={(e: SelectChangeEvent) => setAppName(e.target.value)}
+              sx={{ backgroundColor: "#1E252D", color: appName ? "white" : "#CBCBCB", borderRadius: 1 }}
+              renderValue={(selected) => selected || "Select Application"}
+            >
+              {appOptions.map((a) => (
+                <MenuItem key={a} value={a}>{a}</MenuItem>
+              ))}
+            </Select>
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <FormControl fullWidth size="small">
+              <InputLabel sx={{ color: "#CBCBCB" }}>Entitlement</InputLabel>
+              <Select
+                multiple
+                value={roles}
+                onChange={(e) => setRoles(e.target.value as string[])}
+                input={<OutlinedInput label="Role(s)" />}
+                renderValue={(selected) => (
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                    {selected.map((value) => (
+                      <Chip
+                        key={value}
+                        label={value}
+                        sx={{ backgroundColor: "#007BFF", color: "white" }}
+                      />
+                    ))}
+                  </Box>
+                )}
+                sx={{ backgroundColor: "#1E252D", color: "white", borderRadius: 1 }}
+              >
+                {availableRoles.map((r) => (
+                  <MenuItem key={r} value={r}>{r}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <Select
+              fullWidth
+              displayEmpty
+              size="small"
+              value={accountType}
+              onChange={(e: SelectChangeEvent) => setAccountType(e.target.value)}
+              sx={{ backgroundColor: "#1E252D", color: accountType ? "white" : "#CBCBCB", borderRadius: 1 }}
+              renderValue={(selected) => selected || "Account Type"}
+            >
+              {accountTypes.map((t) => (
+                <MenuItem key={t} value={t}>{t}</MenuItem>
+              ))}
+            </Select>
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <Select
+              fullWidth
+              displayEmpty
+              size="small"
+              value={status}
+              onChange={(e: SelectChangeEvent) => setStatus(e.target.value)}
+              sx={{ backgroundColor: "#1E252D", color: status ? "white" : "#CBCBCB", borderRadius: 1 }}
+              renderValue={(selected) => selected || "Status"}
+            >
+              {statusOptions.map((s) => (
+                <MenuItem key={s} value={s}>{s}</MenuItem>
+              ))}
+            </Select>
+          </Grid>
+        </Grid>
+
+        <Box sx={{ mt: 3, display: "flex", gap: 2, justifyContent: "flex-end" }}>
+          <Button variant="outlined" color="inherit" onClick={onBack} sx={{ textTransform: "none" }}>
+            Cancel
+          </Button>
+          <Button 
+            variant="contained" 
+            onClick={handleSubmit} 
+            sx={{ textTransform: "none" }}
+            disabled={checkingUser}
+          >
+            {checkingUser ? <CircularProgress size={24} /> : "Create"}
+          </Button>
+        </Box>
+      </Box>
+
+      <Dialog
+        open={confirmDialogOpen}
+        onClose={() => setConfirmDialogOpen(false)}
+      >
+        <DialogTitle>User Already Has Entitlements</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            This user already has existing entitlements. Would you like to add the selected entitlements to this user instead of creating a new account?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmDialogOpen(false)} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleConfirmAddEntitlement} color="primary" variant="contained">
+            Add Entitlements
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          severity={snackbarSeverity}
+          onClose={() => setSnackbarOpen(false)}
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
+    </Box>
   );
-};
-
-export default Dashboard;
+}
